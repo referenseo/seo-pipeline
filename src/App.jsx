@@ -48,65 +48,114 @@ JSON: {"concurrents":[{"position":1,"titre":"...","angle":"...","nb_mots_estime"
 
   longtail: (s, k, secondaryKw, site, wordCount, instructions) => ({
     system: SYSTEM_BASE(site),
-    user: `Tu es un expert SEO avec 10 ans d'expérience spécialisé dans "${k}". Dresse une liste de 15 mots-clés longue traîne pour: "${s}".
+    user: `Tu es un expert SEO avec 10 ans d'expérience spécialisé dans "${k}". Effectue une analyse SEO complète pour: "${s}".
 Audience: ${AUDIENCE}
 Objectif: ${CTA}
-Critères: requêtes ultra-ciblées, faible concurrence, fort potentiel de conversion, proches du langage naturel.
 Consignes supplémentaires: ${instructions}
 
-Pour chaque mot-clé fournis: mot-clé, volume estimé, niveau concurrence (Faible/Moyen/Élevé), intention (Informationnelle/Transactionnelle/Navigationnelle), étape funnel (Découverte/Considération/Conversion).
+PARTIE 1 — Stratégie de mots-clés:
+- 1 mot-clé principal confirmé (court, 2-4 mots max)
+- 5 à 10 mots-clés secondaires PROPRES: expressions courtes (2-4 mots), naturelles, qu'un humain taperait vraiment sur Google. PAS de phrases longues artificielles. PAS de mots-clés collés ensemble.
+- Intention de recherche dominante
 
-JSON: {"mots_cles":[{"mot_cle":"...","volume_estime":"...","concurrence":"Faible|Moyen|Élevé","intention":"...","funnel":"..."}],"liste_brute":"mot1, mot2, mot3..."}`
+PARTIE 2 — Longue traîne (15 requêtes):
+Requêtes conversationnelles naturelles, faible concurrence, fort potentiel de conversion.
+Pour chaque: requête, volume estimé, concurrence (Faible/Moyen/Élevé), intention, étape funnel.
+
+PARTIE 3 — Angle éditorial recommandé:
+Choisis UN angle parmi: débutant pas à pas / erreurs à éviter / étude de cas / méthode concrète / comparatif / retour d'expérience.
+Justifie pourquoi cet angle est le plus différenciant vs la concurrence.
+
+JSON: {
+  "mot_cle_principal": "...",
+  "mots_cles_secondaires": ["mot court", "autre expression", "..."],
+  "intention_dominante": "informationnelle|transactionnelle|navigationnelle",
+  "angle_editorial": "...",
+  "justification_angle": "...",
+  "mots_cles_longtail": [{"requete":"...","volume_estime":"...","concurrence":"Faible|Moyen|Élevé","intention":"...","funnel":"..."}],
+  "liste_brute": "mot1, mot2, mot3..."
+}`
   }),
 
   article: (s, k, secondaryKw, site, wordCount, instructions, prevData) => ({
-    system: `${SYSTEM_BASE(site)} Tu es un expert en rédaction SEO avec 10 ans d'expérience. Tu génères des articles au format blocs Gutenberg WordPress, optimisés SEO, directement publiables.`,
+    system: `${SYSTEM_BASE(site)} Tu es un rédacteur SEO expert, humain, différenciant. Tu écris des articles qui rankent top 3, engagent et convertissent. Tu génères du contenu au format blocs Gutenberg WordPress.`,
     user: `Rédige un article SEO de ${wordCount} mots pour le site ${site}.
 
+═══ CONTEXTE ═══
 Sujet: "${s}"
-Mot-clé principal: "${k}"
-Mots-clés secondaires (issus de l'analyse longue traîne): ${prevData?.longtail?.liste_brute || "à définir selon le contexte"}
+Mot-clé principal: ${prevData?.longtail?.mot_cle_principal || k}
+Mots-clés secondaires: ${(prevData?.longtail?.mots_cles_secondaires || []).join(", ") || "à définir"}
+Intention de recherche: ${prevData?.longtail?.intention_dominante || "informationnelle"}
+Angle éditorial choisi: ${prevData?.longtail?.angle_editorial || prevData?.intention?.angle_differenciant || "à définir"}
+Justification: ${prevData?.longtail?.justification_angle || ""}
 Audience: ${AUDIENCE}
 Ton: ${TON}
 Objectif: ${OBJECTIF}
-Angle recommandé: ${prevData?.intention?.angle_differenciant || "à définir"}
-Mots-clés longue traîne à intégrer naturellement: ${prevData?.longtail?.liste_brute || ""}
-Requêtes conversationnelles à couvrir: ${(prevData?.competitors?.requetes_conversationnelles || []).slice(0,10).join(", ")}
+Requêtes conversationnelles à couvrir: ${(prevData?.competitors?.requetes_conversationnelles || []).slice(0,8).join(" / ")}
 Consignes supplémentaires: ${instructions}
 
-FORMAT OBLIGATOIRE — BLOCS GUTENBERG:
-Tout le contenu doit utiliser le format blocs Gutenberg. Exemples:
+═══ FORMAT — BLOCS GUTENBERG OBLIGATOIRE ═══
 - Paragraphe: <!-- wp:paragraph --><p>texte</p><!-- /wp:paragraph -->
 - H2: <!-- wp:heading {"level":2} --><h2>titre</h2><!-- /wp:heading -->
 - H3: <!-- wp:heading {"level":3} --><h3>titre</h3><!-- /wp:heading -->
-- Liste: <!-- wp:list --><ul><li>item</li></ul><!-- /wp:list -->
-- Citation: <!-- wp:quote --><blockquote><p>citation</p></blockquote><!-- /wp:quote -->
+- Liste: <!-- wp:list --><ul><!-- wp:list-item --><li>item</li><!-- /wp:list-item --></ul><!-- /wp:list -->
+- Citation: <!-- wp:quote --><blockquote class="wp-block-quote"><p>citation</p></blockquote><!-- /wp:quote -->
 - Shortcode: <!-- wp:shortcode -->[shortcode]<!-- /wp:shortcode -->
 
-STRUCTURE OBLIGATOIRE:
-- meta_title: accrocheur avec mot-clé au début. NE PAS mettre d'année — elle sera saisie manuellement dans SEOPress.
-- wp_title: titre de l'article WordPress, avec [current_date format=Y] pour l'année (ex: "Comment créer un business en ligne en [current_date format=Y]")
-- meta_description: 130-160 caractères, sans mention de l'année
-- Introduction (75 mots max en blocs Gutenberg): présente le sujet, mot-clé naturel. Terminer par: <!-- wp:shortcode -->[elementor-template id="22062"]<!-- /wp:shortcode -->
-- Corps: minimum 4 H2, H3 si besoin, transitions fluides entre sections
-- FAQ SEO: 3 questions People Also Ask, réponses 50-150 mots
-- Conclusion avec CTA (${CTA}), terminer par: <!-- wp:shortcode -->[elementor-template id="1148"]<!-- /wp:shortcode -->
+═══ STRUCTURE OBLIGATOIRE ═══
 
-RÈGLES LANGUE ET STYLE — ABSOLUMENT OBLIGATOIRE:
-- Français naturel et fluide. Aucune formulation qui ressemble à une liste de mots-clés collés.
-- INTERDIT: titres sans verbe ni sens (ex: "Formation TikTok Ads entrepreneur français gratuite")
-- INTERDIT: promesses creuses ou anglicisées (ex: "passer de débutant à expert en 30 jours", "booster tes résultats", "hacker ta croissance")
-- Les H2/H3 sont des titres naturels qu'un humain lirait avec plaisir, formulés comme de vraies phrases
-- Les mots-clés secondaires s'intègrent naturellement dans le texte, jamais de manière forcée
-- Utiliser [current_date format=Y] pour toute mention de l'année dans le corps du texte
+1. META DONNÉES:
+   - meta_title: accrocheur, mot-clé au début, SANS année (sera gérée par SEOPress)
+   - wp_title: titre WordPress avec [current_date format=Y] pour l'année
+   - meta_description: 130-160 caractères, incitative, sans année
 
-RÈGLES SEO:
-- Densité mot-clé principal: 1% à 1.5%
-- Minimum 15 mots du champ sémantique
-- Entités nommées: marques, outils, concepts liés
-- Proposer 2-3 ancres de maillage interne naturelles
-- Renforcer EEAT: exemples concrets, statistiques, citations
-- Suivre les Google Quality Raters Guidelines
+2. BLOC RÉPONSE DIRECTE (featured snippet non nommé):
+   Juste avant l'intro — 40 à 60 mots maximum.
+   Réponse claire et directe à la requête principale.
+   Format: paragraphe court ou liste à puces selon la question.
+   Objectif: décrocher la position 0 Google.
+   Envelopper dans un bloc Gutenberg paragraphe ou liste.
+
+3. INTRODUCTION (75 mots max):
+   Accroche forte (question, stat, situation concrète).
+   Présente le sujet naturellement, mot-clé intégré sans forcer.
+   Terminer par: <!-- wp:shortcode -->[elementor-template id="22062"]<!-- /wp:shortcode -->
+
+4. CORPS DE L'ARTICLE:
+   Minimum 4 H2 naturels et humains.
+   Chaque section: 1 idée principale + exemples concrets + mini retour d'expérience ("on a testé...", "résultat...").
+   Transitions fluides entre sections (pas de rupture abrupte).
+   H3 pour approfondir quand nécessaire.
+   Varier le rythme: phrases courtes percutantes + phrases longues explicatives.
+
+5. FAQ (3 questions People Also Ask):
+   Questions formulées comme les gens les cherchent vraiment.
+   Réponses 50-150 mots, optimisées featured snippets.
+
+6. CONCLUSION + CTA:
+   Résume les points clés (sans les répéter mot pour mot).
+   Appel à l'action: ${CTA}
+   Terminer par: <!-- wp:shortcode -->[elementor-template id="1148"]<!-- /wp:shortcode -->
+
+═══ RÈGLES LANGUE — NON NÉGOCIABLES ═══
+✗ INTERDIT — keyword stuffing: aucune phrase avec mots-clés collés artificiellement
+✗ INTERDIT — titres sur-optimisés: "TikTok Ads débutant budget entrepreneur français"
+✗ INTERDIT — promesses vides: "devenir expert en 30 jours", "booster tes résultats", "hacker ta croissance"
+✗ INTERDIT — anglicismes inutiles quand le français existe
+✗ INTERDIT — H2 sans verbe ou sans sens grammatical
+✓ Les mots-clés secondaires s'intègrent dans des phrases déjà naturelles, jamais placés pour "cocher une case"
+✓ Les H2 sont des vraies questions ou affirmations qu'un humain formulerait
+✓ Exemples concrets obligatoires dans chaque section principale
+✓ Mini retours d'expérience ("on a testé X pendant 3 mois, voilà ce qu'on a observé...")
+✓ Utiliser [current_date format=Y] pour toute mention de l'année dans le corps
+
+═══ RÈGLES SEO ═══
+- Densité mot-clé principal: 1% à 1.5% — pas plus
+- Champ sémantique riche (15+ termes liés)
+- Entités nommées: outils, marques, concepts concrets du sujet
+- 2-3 ancres de maillage interne naturelles
+- EEAT: statistiques datées, exemples vérifiables, points de vue d'expert
+- Google Quality Raters Guidelines
 
 JSON: {"meta_title":"...","meta_description":"...","wp_title":"...","html_content":"<!-- wp:paragraph -->...<!-- /wp:paragraph -->","word_count":0,"reading_time_minutes":0,"seo_score_estimate":0,"champ_semantique":["..."],"ancres_maillage":[{"ancre":"...","sujet_cible":"..."}],"excerpt":"..."}`
   }),
@@ -499,16 +548,40 @@ export default function App() {
                   )}
 
                   {step.id === "longtail" && (
-                    <div>
-                      <p style={{ margin:"0 0 8px", fontSize:11, color:"var(--color-text-secondary)", fontFamily:"var(--font-mono)", background:"var(--color-background-primary)", padding:"6px 8px", borderRadius:"var(--border-radius-md)", border:"0.5px solid var(--color-border-tertiary)" }}>{data.liste_brute}</p>
-                      <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                        {(data.mots_cles||[]).slice(0,5).map((m,j)=>(
-                          <div key={j} style={{ display:"flex", alignItems:"center", gap:8, fontSize:11 }}>
-                            <span style={{ flex:1, color:"var(--color-text-primary)", fontWeight:500 }}>{m.mot_cle}</span>
-                            <span style={{ padding:"1px 6px", borderRadius:99, background:"var(--color-background-secondary)", color:"var(--color-text-secondary)", fontSize:10 }}>{m.concurrence}</span>
-                            <span style={{ padding:"1px 6px", borderRadius:99, background:"var(--color-background-secondary)", color:"var(--color-text-secondary)", fontSize:10 }}>{m.funnel}</span>
-                          </div>
-                        ))}
+                    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                      <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                        <div style={{ padding:"6px 10px", background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-md)", flex:1 }}>
+                          <p style={{ margin:"0 0 2px", fontSize:10, color:"var(--color-text-secondary)" }}>Mot-clé principal</p>
+                          <p style={{ margin:0, fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>{data.mot_cle_principal}</p>
+                        </div>
+                        <div style={{ padding:"6px 10px", background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-md)", flex:1 }}>
+                          <p style={{ margin:"0 0 2px", fontSize:10, color:"var(--color-text-secondary)" }}>Intention</p>
+                          <p style={{ margin:0, fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>{data.intention_dominante}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p style={{ margin:"0 0 4px", fontSize:11, fontWeight:500, color:"var(--color-text-primary)" }}>Angle éditorial</p>
+                        <p style={{ margin:"0 0 2px", fontSize:12, color:"var(--color-text-secondary)" }}>{data.angle_editorial} — {data.justification_angle}</p>
+                      </div>
+                      <div>
+                        <p style={{ margin:"0 0 4px", fontSize:11, fontWeight:500, color:"var(--color-text-primary)" }}>Mots-clés secondaires</p>
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                          {(data.mots_cles_secondaires||[]).map((m,j)=>(
+                            <span key={j} style={{ fontSize:11, padding:"2px 8px", background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:4, color:"var(--color-text-primary)" }}>{m}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p style={{ margin:"0 0 4px", fontSize:11, fontWeight:500, color:"var(--color-text-primary)" }}>Longue traîne top 5</p>
+                        <div style={{ display:"flex", flexDirection:"column", gap:3 }}>
+                          {(data.mots_cles_longtail||[]).slice(0,5).map((m,j)=>(
+                            <div key={j} style={{ display:"flex", alignItems:"center", gap:8, fontSize:11 }}>
+                              <span style={{ flex:1, color:"var(--color-text-primary)" }}>{m.requete}</span>
+                              <span style={{ padding:"1px 6px", borderRadius:99, background:"var(--color-background-secondary)", color:"var(--color-text-secondary)", fontSize:10 }}>{m.concurrence}</span>
+                              <span style={{ padding:"1px 6px", borderRadius:99, background:"var(--color-background-secondary)", color:"var(--color-text-secondary)", fontSize:10 }}>{m.funnel}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
