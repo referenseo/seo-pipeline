@@ -65,7 +65,7 @@ JSON: {"mots_cles":[{"mot_cle":"...","volume_estime":"...","concurrence":"Faible
 
 Sujet: "${s}"
 Mot-clé principal: "${k}"
-Mots-clés secondaires: ${secondaryKw || "à définir selon le contexte"}
+Mots-clés secondaires (issus de l'analyse longue traîne): ${prevData?.longtail?.liste_brute || "à définir selon le contexte"}
 Audience: ${AUDIENCE}
 Ton: ${TON}
 Objectif: ${OBJECTIF}
@@ -225,7 +225,7 @@ function SiteModal({ sites, onSave, onSelect, onDelete, onClose }) {
 export default function App() {
   const [subject, setSubject]         = useState("");
   const [keyword, setKeyword]         = useState("");
-  const [secondaryKw, setSecondaryKw] = useState("");
+  const [secondaryKw] = useState(""); // généré automatiquement par l'étape Longue traîne
   const [wordCount, setWordCount]     = useState(1500);
   const [instructions, setInstructions] = useState(DEFAULT_INSTRUCTIONS);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -320,7 +320,7 @@ export default function App() {
 
       <div style={{ marginBottom:"1.25rem" }}>
         <h2 style={{ fontSize:20, fontWeight:500, margin:"0 0 2px" }}>Pipeline SEO — Les Makers</h2>
-        <p style={{ fontSize:13, color:"var(--color-text-secondary)", margin:0 }}>De l'idée à la publication WordPress en 4 étapes IA</p>
+        <p style={{ fontSize:13, color:"var(--color-text-secondary)", margin:0 }}>De l'idée à la publication WordPress en 5 étapes IA</p>
       </div>
 
       <div style={{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)", padding:"1rem 1.25rem", marginBottom:"0.75rem" }}>
@@ -355,11 +355,6 @@ export default function App() {
             <label style={{ fontSize:12, color:"var(--color-text-secondary)", display:"block", marginBottom:4 }}>Mot-clé principal</label>
             <input type="text" value={keyword} onChange={e=>setKeyword(e.target.value)} placeholder="ex: business en ligne" style={{ width:"100%", boxSizing:"border-box" }} disabled={running} />
           </div>
-        </div>
-
-        <div style={{ marginBottom:10 }}>
-          <label style={{ fontSize:12, color:"var(--color-text-secondary)", display:"block", marginBottom:4 }}>Mots-clés secondaires <span style={{ color:"var(--color-text-tertiary)" }}>(optionnel)</span></label>
-          <input type="text" value={secondaryKw} onChange={e=>setSecondaryKw(e.target.value)} placeholder="ex: créer un site web, business rentable, revenus passifs" style={{ width:"100%", boxSizing:"border-box" }} disabled={running} />
         </div>
 
         <div style={{ marginBottom:12 }}>
@@ -527,51 +522,63 @@ export default function App() {
         })}
       </div>
 
-      {(stepStatus["article"] === "done") && (
-        <div style={{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)", padding:"1rem 1.25rem", animation:"fadeIn 0.3s ease" }}>
-          <p style={{ margin:"0 0 10px", fontSize:14, fontWeight:500, color:"var(--color-text-primary)" }}>Publication WordPress</p>
-
-          {activeSite ? (
-            <div style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 12px", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-md)", border:"0.5px solid var(--color-border-tertiary)", marginBottom:10 }}>
-              <span style={{ width:7, height:7, borderRadius:"50%", background:"#10B981", display:"inline-block", flexShrink:0 }} />
-              <div style={{ flex:1 }}>
-                <p style={{ margin:0, fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>{activeSite.name}</p>
-                <p style={{ margin:0, fontSize:11, color:"var(--color-text-secondary)" }}>{activeSite.wpUrl} · {activeSite.wpUser}</p>
-              </div>
-              <button onClick={()=>setShowModal(true)} style={{ fontSize:11, padding:"3px 10px" }}>Changer</button>
-            </div>
-          ) : (
-            <div style={{ padding:"8px 12px", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-md)", marginBottom:10 }}>
-              <p style={{ margin:0, fontSize:12, color:"var(--color-text-secondary)" }}>Aucun site — <button onClick={()=>setShowModal(true)} style={{ background:"none", border:"none", color:"var(--color-text-info)", cursor:"pointer", padding:0, fontSize:12 }}>ajouter</button></p>
-            </div>
-          )}
-
-          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-            <button onClick={handlePublish} disabled={!activeSite||wpStatus==="publishing"} style={{ padding:"7px 18px", fontWeight:500, opacity:(!activeSite||wpStatus==="publishing")?0.45:1 }}>
-              {wpStatus==="publishing" ? "Publication…" : "📤 Publier en brouillon"}
-            </button>
-            <button onClick={()=>{
-              const html = results["article"]?.html_content || "";
-              const blob = new Blob([html],{type:"text/html"});
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href=url; a.download=`article-${keyword.replace(/\s+/g,"-")}.html`; a.click();
-            }} style={{ fontSize:12, padding:"7px 14px" }}>⬇ Télécharger HTML</button>
+      <div style={{ border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-md)", overflow:"hidden", opacity: stepStatus["article"]==="done" ? 1 : 0.4, transition:"opacity 0.3s" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 12px", background:"var(--color-background-primary)" }}>
+          <span style={{ fontSize:15, minWidth:20, textAlign:"center" }}>🚀</span>
+          <div style={{ flex:1 }}>
+            <span style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>5. Publication WordPress</span>
+            <span style={{ fontSize:11, color:"var(--color-text-secondary)", marginLeft:8 }}>Publier en brouillon sur ton site</span>
           </div>
-
-          {wpStatus==="published" && wpResult && (
-            <div style={{ marginTop:10, background:"#D1FAE5", border:"0.5px solid #A7F3D0", borderRadius:"var(--border-radius-md)", padding:"10px 14px", animation:"fadeIn 0.3s ease" }}>
-              <p style={{ margin:0, fontSize:13, fontWeight:500, color:"#065F46" }}>✓ Brouillon publié sur {activeSite?.name} !</p>
-              <p style={{ margin:"3px 0 0", fontSize:12, color:"#065F46" }}>Article #{wpResult.id} — <a href={wpResult.link} target="_blank" rel="noopener" style={{ color:"#047857" }}>Voir dans WordPress ↗</a></p>
-            </div>
-          )}
-          {(wpStatus==="error_wp"||wpStatus==="no_site") && (
-            <div style={{ marginTop:10, background:"#FEE2E2", border:"0.5px solid #FECACA", borderRadius:"var(--border-radius-md)", padding:"10px 14px" }}>
-              <p style={{ margin:0, fontSize:13, color:"#991B1B" }}>{wpStatus==="no_site"?"Sélectionne un site d'abord.":`Erreur WP : ${wpResult?.error}`}</p>
-            </div>
-          )}
+          {wpStatus === "published" && <Badge status="done" />}
+          {wpStatus === "publishing" && <><Spinner /><Badge status="running" /></>}
+          {(wpStatus === "error_wp" || wpStatus === "no_site") && <Badge status="error" />}
         </div>
-      )}
+
+        {stepStatus["article"] === "done" && (
+          <div style={{ borderTop:"0.5px solid var(--color-border-tertiary)", padding:"10px 12px", background:"var(--color-background-secondary)", display:"flex", flexDirection:"column", gap:10 }}>
+
+            {activeSite ? (
+              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"7px 10px", background:"var(--color-background-primary)", borderRadius:"var(--border-radius-md)", border:"0.5px solid var(--color-border-tertiary)" }}>
+                <span style={{ width:6, height:6, borderRadius:"50%", background:"#10B981", display:"inline-block", flexShrink:0 }} />
+                <div style={{ flex:1 }}>
+                  <p style={{ margin:0, fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>{activeSite.name}</p>
+                  <p style={{ margin:0, fontSize:11, color:"var(--color-text-secondary)" }}>{activeSite.wpUrl} · {activeSite.wpUser}</p>
+                </div>
+                <button onClick={()=>setShowModal(true)} style={{ fontSize:11, padding:"3px 10px" }}>Changer</button>
+              </div>
+            ) : (
+              <div style={{ padding:"7px 10px", background:"var(--color-background-primary)", borderRadius:"var(--border-radius-md)", border:"0.5px solid var(--color-border-tertiary)" }}>
+                <p style={{ margin:0, fontSize:12, color:"var(--color-text-secondary)" }}>Aucun site configuré — <button onClick={()=>setShowModal(true)} style={{ background:"none", border:"none", color:"var(--color-text-info)", cursor:"pointer", padding:0, fontSize:12 }}>ajouter</button></p>
+              </div>
+            )}
+
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+              <button onClick={handlePublish} disabled={!activeSite||wpStatus==="publishing"} style={{ padding:"7px 18px", fontWeight:500, opacity:(!activeSite||wpStatus==="publishing")?0.45:1, cursor:(!activeSite||wpStatus==="publishing")?"not-allowed":"pointer" }}>
+                {wpStatus==="publishing" ? "Publication en cours…" : "📤 Publier en brouillon"}
+              </button>
+              <button onClick={()=>{
+                const html = results["article"]?.html_content || "";
+                const blob = new Blob([html],{type:"text/html"});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href=url; a.download=`article-${keyword.replace(/\s+/g,"-")}.html`; a.click();
+              }} style={{ fontSize:12, padding:"7px 14px" }}>⬇ Télécharger HTML</button>
+            </div>
+
+            {wpStatus==="published" && wpResult && (
+              <div style={{ background:"#D1FAE5", border:"0.5px solid #A7F3D0", borderRadius:"var(--border-radius-md)", padding:"10px 14px", animation:"fadeIn 0.3s ease" }}>
+                <p style={{ margin:0, fontSize:13, fontWeight:500, color:"#065F46" }}>✓ Brouillon publié sur {activeSite?.name} !</p>
+                <p style={{ margin:"3px 0 0", fontSize:12, color:"#065F46" }}>Article #{wpResult.id} — <a href={wpResult.link} target="_blank" rel="noopener" style={{ color:"#047857" }}>Voir dans WordPress ↗</a></p>
+              </div>
+            )}
+            {(wpStatus==="error_wp"||wpStatus==="no_site") && (
+              <div style={{ background:"#FEE2E2", border:"0.5px solid #FECACA", borderRadius:"var(--border-radius-md)", padding:"10px 14px" }}>
+                <p style={{ margin:0, fontSize:13, color:"#991B1B" }}>{wpStatus==="no_site"?"Sélectionne un site d'abord.":`Erreur WP : ${wpResult?.error}`}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
