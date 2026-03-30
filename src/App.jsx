@@ -208,11 +208,14 @@ mot_cle_principal_final, mots_cles_secondaires_final (5), intention_finale, angl
 PHASE 2 — RÉDACTION GUTENBERG:
 Blocs: § = <!-- wp:paragraph --><p>x</p><!-- /wp:paragraph --> | H2 = <!-- wp:heading {"level":2} --><h2>x</h2><!-- /wp:heading --> | H3 = <!-- wp:heading {"level":3} --><h3>x</h3><!-- /wp:heading --> | liste = <!-- wp:list --><ul><!-- wp:list-item --><li>x</li><!-- /wp:list-item --></ul><!-- /wp:list --> | punchline = <!-- wp:quote --><blockquote class="wp-block-quote"><p>x</p></blockquote><!-- /wp:quote --> | shortcode = <!-- wp:shortcode -->[x]<!-- /wp:shortcode -->
 MÉTADONNÉES: ${titleNote} meta_description: 130-160 car, sans année.
-${snippetInstr}
-INTRO (80 mots max): ${isLM?"hook vérité ligne 1 (jamais 'Dans cet article')":"accroche directe"}, contexte + mot-clé naturel. Fin intro: <!-- wp:shortcode -->${scIntro}<!-- /wp:shortcode -->
-CORPS: ${isLM?"H2 humains avec verbe, punchline/section, 2-4 moments signature, 1 stat concrète.":"H2 naturels, exemples concrets."} Paragraphes 3-4 lignes. Transitions fluides. ${yearNote}
-FAQ: 3 questions PAA, réponses 50-150 mots.
-CONCLUSION+CTA: ${isLM?"bénéfice concret AVANT l'action.":"CTA clair."} Fin: <!-- wp:shortcode -->${scEnd}<!-- /wp:shortcode -->
+
+ORDRE OBLIGATOIRE DU CONTENU (respecter strictement cette séquence):
+[1] ${snippetInstr}
+[2] INTRO (80 mots max): ${isLM?"hook vérité ligne 1 (jamais 'Dans cet article')":"accroche directe"}, contexte + mot-clé naturel. Dernière ligne de l'intro: <!-- wp:shortcode -->${scIntro}<!-- /wp:shortcode -->
+⚠️ Le bloc [1] SNIPPET doit impérativement apparaître AVANT le bloc [2] INTRO dans html_content. JAMAIS après.
+[3] CORPS: ${isLM?"H2 humains avec verbe, punchline/section, 2-4 moments signature, 1 stat concrète.":"H2 naturels, exemples concrets."} Paragraphes 3-4 lignes. Transitions fluides. ${yearNote}
+[4] FAQ: 3 questions PAA, réponses 50-150 mots.
+[5] CONCLUSION+CTA: ${isLM?"bénéfice concret AVANT l'action.":"CTA clair."} Fin: <!-- wp:shortcode -->${scEnd}<!-- /wp:shortcode -->
 ANTI-STUFFING: >5 mots mot-clé collé=INTERDIT.
 SEO: densité 1-1.5%, sémantique 15+, entités nommées, 2-3 ancres maillage, EEAT.
 
@@ -643,16 +646,17 @@ export default function App(){
     const toRun=queue.filter(q=>selectedIds.has(q.id)&&q.status==="queued");
     setSelectedIds(new Set());
     setBatchRunning(true);
+    abortRef.current=false;
     try{
       for(const item of toRun){
         if(abortRef.current)break;
         setSubject(item.subject);setKeyword(item.keyword);setWordCount(item.wordCount||1500);setArticleType(item.articleType||"article_simple");
-        setTab("pipeline");
+        // Ne pas switcher d'onglet — rester sur le calendrier pendant le batch
         setQueue(prev=>{const u=prev.map(q=>q.id===item.id?{...q,status:"running"}:q);saveLS(QUEUE_KEY,u);return u;});
         await runPipelineFor(item.subject,item.keyword,item.wordCount||1500,activeSite,item.articleType||"article_simple",{},true);
         setQueue(prev=>{const u=prev.filter(q=>q.id!==item.id);saveLS(QUEUE_KEY,u);return u;});
       }
-    }finally{setBatchRunning(false);}
+    }finally{setBatchRunning(false);abortRef.current=false;}
   }
 
   function sortQueue(q){return[...q].sort((a,b)=>{if(a.date&&b.date)return new Date(a.date)-new Date(b.date);if(a.date&&!b.date)return-1;if(!a.date&&b.date)return 1;return 0;});}
@@ -670,7 +674,7 @@ export default function App(){
   function startEditQueue(idx){const item=queue[idx];setQForm({subject:item.subject,keyword:item.keyword,wordCount:item.wordCount||1500,date:item.date||"",articleType:item.articleType||"article_simple"});setEditingQIdx(idx);}
   function removeFromQueue(idx){const u=queue.filter((_,i)=>i!==idx);setQueue(u);saveLS(QUEUE_KEY,u);}
 
-  const queueForSite=queue.filter(q=>q.siteId===activeSite?.name);
+  const queueForSite=sortQueue(queue.filter(q=>!q.siteId||q.siteId===activeSite?.name));
   const pendingCount=queueForSite.filter(q=>q.status==="queued").length;
   const typesMeta=isLesmakersActive?ARTICLE_TYPES_LESMAKERS:ARTICLE_TYPES_STANDARD;
 
@@ -997,31 +1001,40 @@ export default function App(){
                 ):(
                   <div style={{display:"flex",flexDirection:"column",gap:8}}>
                     {/* BATCH TOOLBAR */}
-                    {queueForSite.filter(q=>q.status==="queued").length>0&&(
-                      <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:C.card,border:`1px solid ${C.border}`,borderRadius:C.radius,boxShadow:C.shadow}}>
-                        <label style={{display:"flex",alignItems:"center",gap:7,fontSize:12,fontWeight:600,color:C.text,cursor:"pointer"}}>
-                          <input type="checkbox"
-                            checked={queueForSite.filter(q=>q.status==="queued").every(q=>selectedIds.has(q.id))}
-                            onChange={e=>{
-                              if(e.target.checked){
-                                setSelectedIds(new Set(queueForSite.filter(q=>q.status==="queued").map(q=>q.id)));
-                              }else{
-                                setSelectedIds(new Set());
-                              }
-                            }}
-                            style={{width:15,height:15,accentColor:C.yellow}}
-                          />
-                          Tout sélectionner
-                        </label>
-                        <span style={{color:C.border,fontSize:12}}>|</span>
-                        <span style={{fontSize:12,color:C.textMuted}}>{selectedIds.size} article{selectedIds.size>1?"s":""} sélectionné{selectedIds.size>1?"s":""}</span>
-                        {selectedIds.size>0&&(
-                          <Btn variant="yellow" onClick={handleRunSelected} disabled={batchRunning} style={{marginLeft:"auto",height:34,fontSize:12}}>
-                            {batchRunning?<><Spinner/> En cours…</>:<>▶ Lancer {selectedIds.size} article{selectedIds.size>1?"s":""} en séquence</>}
+                    {(queueForSite.filter(q=>q.status==="queued").length>0||batchRunning)&&(
+                      <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:batchRunning?C.yellowLight:C.card,border:`1px solid ${batchRunning?C.yellow:C.border}`,borderRadius:C.radius,boxShadow:C.shadow,flexWrap:"wrap"}}>
+                        {!batchRunning&&(
+                          <>
+                            <label style={{display:"flex",alignItems:"center",gap:7,fontSize:12,fontWeight:600,color:C.text,cursor:"pointer"}}>
+                              <input type="checkbox"
+                                checked={queueForSite.filter(q=>q.status==="queued").length>0&&queueForSite.filter(q=>q.status==="queued").every(q=>selectedIds.has(q.id))}
+                                onChange={e=>{
+                                  if(e.target.checked){setSelectedIds(new Set(queueForSite.filter(q=>q.status==="queued").map(q=>q.id)));}
+                                  else{setSelectedIds(new Set());}
+                                }}
+                                style={{width:15,height:15,accentColor:C.yellow}}
+                              />
+                              Tout sélectionner
+                            </label>
+                            <span style={{color:C.border,fontSize:12}}>|</span>
+                            <span style={{fontSize:12,color:C.textMuted}}>{selectedIds.size} sélectionné{selectedIds.size>1?"s":""}</span>
+                          </>
+                        )}
+                        {batchRunning&&(
+                          <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
+                            <Spinner/>
+                            <span style={{fontSize:12,fontWeight:600,color:C.yellowDark}}>
+                              Génération en cours — {queueForSite.filter(q=>q.status==="running").map(q=>q.subject)[0]||"…"}
+                            </span>
+                          </div>
+                        )}
+                        {selectedIds.size>0&&!batchRunning&&(
+                          <Btn variant="yellow" onClick={handleRunSelected} style={{marginLeft:"auto",height:34,fontSize:12}}>
+                            ▶ Lancer {selectedIds.size} article{selectedIds.size>1?"s":""} en séquence
                           </Btn>
                         )}
                         {batchRunning&&(
-                          <Btn variant="outline" onClick={()=>{abortRef.current=true;}} style={{height:34,fontSize:12,color:C.red,borderColor:C.red}}>Arrêter</Btn>
+                          <Btn variant="outline" onClick={()=>{abortRef.current=true;setBatchRunning(false);}} style={{marginLeft:"auto",height:34,fontSize:12,color:C.red,borderColor:C.red}}>Arrêter</Btn>
                         )}
                       </div>
                     )}
