@@ -228,6 +228,7 @@ ORDRE OBLIGATOIRE DU CONTENU (respecter strictement cette séquence):
 RAPPEL ANNÉE: ${useYear?"Vérifier que wp_title contient [current_date format=Y] et que html_content contient le H1 identique avec [current_date format=Y]. Aucune année en chiffres directs dans le contenu.":""}
 ANTI-STUFFING: >5 mots mot-clé collé=INTERDIT.
 SEO: densité 1-1.5%, sémantique 15+, entités nommées, 2-3 ancres maillage, EEAT.
+⚠️ IMPORTANT: Le contenu doit tenir dans une seule réponse JSON. Être concis et percutant plutôt que long et répétitif. Pas de remplissage. Chaque paragraphe doit apporter de la valeur.
 
 PHASE 3 — AUTO-CORRECTION: phrases SEO artificielles? générique IA? H2 actionnable? hook tension? ${isLM?"moments signature (min 2)?":""} CTA orienté résultat?
 
@@ -632,7 +633,7 @@ export default function App(){
       {id:"intention",  tokens:2000,build:()=>PROMPTS.intention(subj,kw,siteName,wc,instructions.intention||"")},
       {id:"competitors",tokens:3000,build:()=>PROMPTS.competitors(subj,kw,siteName,wc,instructions.competitors||"")},
       {id:"longtail",   tokens:2500,build:()=>PROMPTS.longtail(subj,kw,siteName,wc,instructions.longtail||"")},
-      {id:"article",    tokens:8000,build:()=>buildArticlePrompt(subj,kw,siteName,wc,instructions.article||"",acc,profile,atype,lsc)},
+      {id:"article",    tokens:16000,build:()=>buildArticlePrompt(subj,kw,siteName,wc,instructions.article||"",acc,profile,atype,lsc)},
     ];
     try{
       for(const cfg of cfgs){
