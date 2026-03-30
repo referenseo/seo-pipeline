@@ -291,7 +291,7 @@ Spécifications:
 - Style cohérent avec un site business/marketing/entrepreneuriat
 - Pas de texte, pas de logo, pas de watermark, pas de photoréalisme
 - Format 16:9, image nette sans bruit visuel`;
-  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${geminiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseModalities:["IMAGE","TEXT"]}})});
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${geminiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseModalities:["IMAGE","TEXT"]}})});
   if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`Gemini HTTP ${res.status}`);}
   const data=await res.json();
   const imgPart=data.candidates?.[0]?.content?.parts?.find(p=>p.inlineData);
@@ -330,7 +330,7 @@ async function publishToWordPress(profile,articleData,featuredMediaId){
 const Spinner=()=><span style={{display:"inline-block",width:14,height:14,border:`2px solid ${C.border}`,borderTop:`2px solid ${C.textMuted}`,borderRadius:"50%",animation:"rspin 0.8s linear infinite",flexShrink:0}}/>;
 
 const Pill=({status,label})=>{
-  const m={idle:{bg:C.bg,color:C.textFaint,label:"En attente"},running:{bg:"#FEF3C7",color:"#92400E",label:"En cours…"},done:{bg:C.greenLight,color:C.green,label:"Terminé"},error:{bg:C.redLight,color:C.red,label:"Erreur"},published:{bg:C.greenLight,color:C.green,label:"Publié ✓"},queued:{bg:C.purpleLight,color:C.purple,label:"Planifié"}}[status]||{bg:C.bg,color:C.textFaint,label:status};
+  const m={idle:{bg:C.bg,color:C.textFaint,label:"En attente"},running:{bg:"#FEF3C7",color:"#92400E",label:"En cours…"},done:{bg:C.greenLight,color:C.green,label:"Terminé"},error:{bg:C.redLight,color:C.red,label:"Erreur"},published:{bg:C.greenLight,color:C.green,label:"Publié ✓"},queued:{bg:C.purpleLight,color:C.purple,label:"Planifié"},pending:{bg:"#EDE9FE",color:C.purple,label:"En attente…"}}[status]||{bg:C.bg,color:C.textFaint,label:status};
   return <span style={{fontSize:11,padding:"3px 9px",borderRadius:99,background:m.bg,color:m.color,fontWeight:600,letterSpacing:"0.01em",whiteSpace:"nowrap"}}>{label||m.label}</span>;
 };
 
@@ -553,11 +553,24 @@ export default function App(){
   const [editingQIdx,setEditingQIdx]=useState(null);
   const [selectedIds,setSelectedIds]=useState(new Set());
   const [batchRunning,setBatchRunning]=useState(false);
+  const execQueueRef=useRef([]); // IDs waiting to run
+  const isProcessingRef=useRef(false);
   const paletteIdxRef=useRef(0);
   const abortRef=useRef(false);
 
   useEffect(()=>{
-    const s=loadLS(SITES_KEY,[]);const instr=loadLS(INSTR_KEY,DEFAULT_INSTRUCTIONS);const q=loadLS(QUEUE_KEY,[]);
+    const s=loadLS(SITES_KEY,[]);const instr=loadLS(INSTR_KEY,DEFAULT_INSTRUCTIONS);let q=loadLS(QUEUE_KEY,[]);
+    // Migrate legacy items without siteId: assign to first site if only one, otherwise drop
+    if(q.some(item=>!item.siteId)){
+      if(s.length===1){
+        q=q.map(item=>item.siteId?item:{...item,siteId:s[0].name});
+        saveLS(QUEUE_KEY,q);
+      } else {
+        // Multiple sites: drop orphan items to avoid mixing — user will re-add them
+        q=q.filter(item=>item.siteId);
+        saveLS(QUEUE_KEY,q);
+      }
+    }
     setSites(s);setInstructions(instr);setQueue(q);
     if(s.length===1)setActiveSite(s[0]);else if(s.length>1)setShowSelector(true);
   },[]);
@@ -633,30 +646,50 @@ export default function App(){
 
   const handleRunPipeline=async()=>{if(!isReady)return;setTab("pipeline");await runPipelineFor(subject,keyword,wordCount,activeSite,articleType,linkSaleConfig,true);};
 
-  async function handleRunFromQueue(idx){
-    const item=queue[idx];const site=activeSite;if(!site)return;
-    setSubject(item.subject);setKeyword(item.keyword);setWordCount(item.wordCount||1500);setArticleType(item.articleType||"article_simple");setTab("pipeline");
-    const updQ=queue.map((q,i)=>i===idx?{...q,status:"running"}:q);setQueue(updQ);saveLS(QUEUE_KEY,updQ);
-    await runPipelineFor(item.subject,item.keyword,item.wordCount||1500,site,item.articleType||"article_simple",{},true);
-    setQueue(prev=>{const u=prev.filter((_,i)=>i!==idx);saveLS(QUEUE_KEY,u);return u;});
-  }
-
-  async function handleRunSelected(){
-    if(!activeSite||selectedIds.size===0)return;
-    const toRun=queue.filter(q=>selectedIds.has(q.id)&&q.status==="queued");
-    setSelectedIds(new Set());
+  async function processExecQueue(){
+    if(isProcessingRef.current)return;
+    isProcessingRef.current=true;
     setBatchRunning(true);
     abortRef.current=false;
     try{
-      for(const item of toRun){
+      while(execQueueRef.current.length>0){
         if(abortRef.current)break;
+        const itemId=execQueueRef.current[0];
+        // Get fresh item from queue state
+        const item=queue.find(q=>q.id===itemId)||loadLS(QUEUE_KEY,[]).find(q=>q.id===itemId);
+        if(!item){execQueueRef.current.shift();continue;}
+        const site=activeSite;if(!site){execQueueRef.current.shift();continue;}
         setSubject(item.subject);setKeyword(item.keyword);setWordCount(item.wordCount||1500);setArticleType(item.articleType||"article_simple");
-        // Ne pas switcher d'onglet — rester sur le calendrier pendant le batch
-        setQueue(prev=>{const u=prev.map(q=>q.id===item.id?{...q,status:"running"}:q);saveLS(QUEUE_KEY,u);return u;});
-        await runPipelineFor(item.subject,item.keyword,item.wordCount||1500,activeSite,item.articleType||"article_simple",{},true);
-        setQueue(prev=>{const u=prev.filter(q=>q.id!==item.id);saveLS(QUEUE_KEY,u);return u;});
+        setQueue(prev=>{const u=prev.map(q=>q.id===itemId?{...q,status:"running"}:q);saveLS(QUEUE_KEY,u);return u;});
+        await runPipelineFor(item.subject,item.keyword,item.wordCount||1500,site,item.articleType||"article_simple",{},true);
+        setQueue(prev=>{const u=prev.filter(q=>q.id!==itemId);saveLS(QUEUE_KEY,u);return u;});
+        execQueueRef.current.shift();
       }
-    }finally{setBatchRunning(false);abortRef.current=false;}
+    }finally{isProcessingRef.current=false;setBatchRunning(false);abortRef.current=false;}
+  }
+
+  function handleRunFromQueue(idx){
+    const item=queue[idx];if(!item||!activeSite)return;
+    // If already in exec queue, ignore
+    if(execQueueRef.current.includes(item.id))return;
+    execQueueRef.current.push(item.id);
+    // Show as "pending" in list
+    setQueue(prev=>{const u=prev.map(q=>q.id===item.id?{...q,status:"pending"}:q);saveLS(QUEUE_KEY,u);return u;});
+    if(!isProcessingRef.current)processExecQueue();
+  }
+
+  function handleRunSelected(){
+    if(!activeSite||selectedIds.size===0)return;
+    const toRun=queue.filter(q=>selectedIds.has(q.id)&&q.status==="queued");
+    setSelectedIds(new Set());
+    // Add all to exec queue
+    for(const item of toRun){
+      if(!execQueueRef.current.includes(item.id)){
+        execQueueRef.current.push(item.id);
+        setQueue(prev=>{const u=prev.map(q=>q.id===item.id?{...q,status:"pending"}:q);saveLS(QUEUE_KEY,u);return u;});
+      }
+    }
+    if(!isProcessingRef.current)processExecQueue();
   }
 
   function sortQueue(q){return[...q].sort((a,b)=>{if(a.date&&b.date)return new Date(a.date)-new Date(b.date);if(a.date&&!b.date)return-1;if(!a.date&&b.date)return 1;return 0;});}
@@ -674,7 +707,7 @@ export default function App(){
   function startEditQueue(idx){const item=queue[idx];setQForm({subject:item.subject,keyword:item.keyword,wordCount:item.wordCount||1500,date:item.date||"",articleType:item.articleType||"article_simple"});setEditingQIdx(idx);}
   function removeFromQueue(idx){const u=queue.filter((_,i)=>i!==idx);setQueue(u);saveLS(QUEUE_KEY,u);}
 
-  const queueForSite=sortQueue(queue.filter(q=>!q.siteId||q.siteId===activeSite?.name));
+  const queueForSite=sortQueue(queue.filter(q=>q.siteId===activeSite?.name));
   const pendingCount=queueForSite.filter(q=>q.status==="queued").length;
   const typesMeta=isLesmakersActive?ARTICLE_TYPES_LESMAKERS:ARTICLE_TYPES_STANDARD;
 
@@ -1081,10 +1114,12 @@ export default function App(){
                             </p>
                           </div>
 
-                          <Pill status={isRunningItem?"running":"queued"}/>
+                          <Pill status={isRunningItem?"running":item.status==="pending"?"pending":"queued"}/>
                           {item.status==="queued"&&editingQIdx!==realIdx&&<Btn variant="ghost" onClick={()=>startEditQueue(realIdx)} style={{height:30,fontSize:13,padding:"0 8px"}}>✎</Btn>}
-                          {item.status==="queued"&&<Btn variant="primary" onClick={()=>handleRunFromQueue(realIdx)} disabled={running} style={{height:32,fontSize:12,padding:"0 14px"}}>▶</Btn>}
-                          {item.status!=="running"&&<Btn variant="danger" onClick={()=>removeFromQueue(realIdx)} style={{height:30,fontSize:12,padding:"0 8px"}}>✕</Btn>}
+                          {(item.status==="queued")&&<Btn variant="primary" onClick={()=>handleRunFromQueue(realIdx)} style={{height:32,fontSize:12,padding:"0 14px"}}>▶</Btn>}
+                          {item.status==="pending"&&<span style={{fontSize:11,color:C.purple,fontWeight:600,padding:"0 6px"}}>En file…</span>}
+                          {item.status!=="running"&&item.status!=="pending"&&<Btn variant="danger" onClick={()=>removeFromQueue(realIdx)} style={{height:30,fontSize:12,padding:"0 8px"}}>✕</Btn>}
+                          {item.status==="pending"&&<Btn variant="ghost" onClick={()=>{execQueueRef.current=execQueueRef.current.filter(id=>id!==item.id);setQueue(prev=>{const u=prev.map(q=>q.id===item.id?{...q,status:"queued"}:q);saveLS(QUEUE_KEY,u);return u;});}} style={{height:30,fontSize:11,padding:"0 8px",color:C.textFaint}}>✕</Btn>}
                         </div>
                       );
                     })}
