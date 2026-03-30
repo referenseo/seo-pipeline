@@ -50,7 +50,7 @@ JSON: {"html_content":"<article>...</article>","word_count":0,"reading_time_minu
 async function callClaude(prompt) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "an, "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "an },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
       max_tokens: 4000,
@@ -69,7 +69,7 @@ async function publishToWordPress(profile, articleData) {
   const cleanUrl = profile.wpUrl.replace(/\/$/, "");
   const res = await fetch(`${cleanUrl}/wp-json/wp/v2/posts`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Basic ${credentials}` },
+    headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "an, "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "an, Authorization: `Basic ${credentials}` },
     body: JSON.stringify({
       title: articleData.title,
       content: articleData.html_content,
