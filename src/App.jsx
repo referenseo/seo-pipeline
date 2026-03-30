@@ -269,11 +269,13 @@ async function callClaude(prompt,maxTokens=3000){
   const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:maxTokens,system:prompt.system,messages:[{role:"user",content:prompt.user}]})});
   if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`HTTP ${res.status}`);}
   const data=await res.json();if(data.error)throw new Error(data.error.message);
+  if(data.stop_reason==="max_tokens")throw new Error("Réponse tronquée (max_tokens atteint) — réduis la longueur de l'article ou réessaie");
   const text=data.content?.map(b=>b.text||"").join("")||"";if(!text)throw new Error("Réponse vide");
   const clean=text.replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();
   const s=clean.indexOf("{"),e2=clean.lastIndexOf("}");
-  if(s===-1||e2===-1)throw new Error("JSON introuvable");
-  return JSON.parse(clean.slice(s,e2+1));
+  if(s===-1||e2===-1)throw new Error("JSON introuvable dans la réponse");
+  try{return JSON.parse(clean.slice(s,e2+1));}
+  catch(e){throw new Error(`JSON invalide: ${e.message} — réessaie ou réduis la longueur`);}
 }
 
 async function generateImageGemini(subject,geminiKey,paletteColor){
@@ -547,6 +549,7 @@ export default function App(){
   const [qForm,setQForm]=useState({subject:"",keyword:"",wordCount:1500,date:"",articleType:"article_simple"});
   const [editingQIdx,setEditingQIdx]=useState(null);
   const [selectedIds,setSelectedIds]=useState(new Set());
+  const [batchRunning,setBatchRunning]=useState(false);
   const paletteIdxRef=useRef(0);
   const abortRef=useRef(false);
 
@@ -574,7 +577,7 @@ export default function App(){
       {id:"intention",  tokens:2000,build:()=>PROMPTS.intention(subj,kw,siteName,wc,instructions.intention||"")},
       {id:"competitors",tokens:3000,build:()=>PROMPTS.competitors(subj,kw,siteName,wc,instructions.competitors||"")},
       {id:"longtail",   tokens:2500,build:()=>PROMPTS.longtail(subj,kw,siteName,wc,instructions.longtail||"")},
-      {id:"article",    tokens:7000,build:()=>buildArticlePrompt(subj,kw,siteName,wc,instructions.article||"",acc,profile,atype,lsc)},
+      {id:"article",    tokens:8000,build:()=>buildArticlePrompt(subj,kw,siteName,wc,instructions.article||"",acc,profile,atype,lsc)},
     ];
     try{
       for(const cfg of cfgs){
@@ -639,18 +642,20 @@ export default function App(){
     if(!activeSite||selectedIds.size===0)return;
     const toRun=queue.filter(q=>selectedIds.has(q.id)&&q.status==="queued");
     setSelectedIds(new Set());
-    for(const item of toRun){
-      const realIdx=queue.findIndex(q=>q.id===item.id);
-      if(realIdx===-1)continue;
-      setSubject(item.subject);setKeyword(item.keyword);setWordCount(item.wordCount||1500);setArticleType(item.articleType||"article_simple");
-      setTab("pipeline");
-      setQueue(prev=>{const u=prev.map(q=>q.id===item.id?{...q,status:"running"}:q);saveLS(QUEUE_KEY,u);return u;});
-      await runPipelineFor(item.subject,item.keyword,item.wordCount||1500,activeSite,item.articleType||"article_simple",{},true);
-      setQueue(prev=>{const u=prev.filter(q=>q.id!==item.id);saveLS(QUEUE_KEY,u);return u;});
-    }
+    setBatchRunning(true);
+    try{
+      for(const item of toRun){
+        if(abortRef.current)break;
+        setSubject(item.subject);setKeyword(item.keyword);setWordCount(item.wordCount||1500);setArticleType(item.articleType||"article_simple");
+        setTab("pipeline");
+        setQueue(prev=>{const u=prev.map(q=>q.id===item.id?{...q,status:"running"}:q);saveLS(QUEUE_KEY,u);return u;});
+        await runPipelineFor(item.subject,item.keyword,item.wordCount||1500,activeSite,item.articleType||"article_simple",{},true);
+        setQueue(prev=>{const u=prev.filter(q=>q.id!==item.id);saveLS(QUEUE_KEY,u);return u;});
+      }
+    }finally{setBatchRunning(false);}
   }
 
-  function sortQueue(q){return[...q].sort((a,b)=>{if(a.date&&b.date)return new Date(b.date)-new Date(a.date);if(a.date&&!b.date)return-1;if(!a.date&&b.date)return 1;return 0;});}
+  function sortQueue(q){return[...q].sort((a,b)=>{if(a.date&&b.date)return new Date(a.date)-new Date(b.date);if(a.date&&!b.date)return-1;if(!a.date&&b.date)return 1;return 0;});}
   function addToQueue(){
     if(!qForm.subject||!qForm.keyword)return;
     const siteId=activeSite?.name||"";
@@ -1011,12 +1016,12 @@ export default function App(){
                         <span style={{color:C.border,fontSize:12}}>|</span>
                         <span style={{fontSize:12,color:C.textMuted}}>{selectedIds.size} article{selectedIds.size>1?"s":""} sélectionné{selectedIds.size>1?"s":""}</span>
                         {selectedIds.size>0&&(
-                          <Btn variant="yellow" onClick={handleRunSelected} disabled={running} style={{marginLeft:"auto",height:34,fontSize:12}}>
-                            {running?<><Spinner/> En cours…</>:<>▶ Lancer {selectedIds.size} article{selectedIds.size>1?"s":""} en séquence</>}
+                          <Btn variant="yellow" onClick={handleRunSelected} disabled={batchRunning} style={{marginLeft:"auto",height:34,fontSize:12}}>
+                            {batchRunning?<><Spinner/> En cours…</>:<>▶ Lancer {selectedIds.size} article{selectedIds.size>1?"s":""} en séquence</>}
                           </Btn>
                         )}
-                        {running&&(
-                          <Btn variant="outline" onClick={()=>{abortRef.current=true;setRunning(false);}} style={{height:34,fontSize:12,color:C.red,borderColor:C.red}}>Arrêter</Btn>
+                        {batchRunning&&(
+                          <Btn variant="outline" onClick={()=>{abortRef.current=true;}} style={{height:34,fontSize:12,color:C.red,borderColor:C.red}}>Arrêter</Btn>
                         )}
                       </div>
                     )}
