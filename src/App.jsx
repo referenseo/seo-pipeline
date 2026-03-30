@@ -167,9 +167,18 @@ function buildArticlePrompt(s,k,site,wc,instructions,prevData,profile,articleTyp
   const snippetBg=profile?.snippetEnabled?(profile?.snippetBg||"#fdeecd"):null;
   const isLM=site.toLowerCase().includes("lesmakers");
   const brief=isLM&&articleType?BRIEFS[articleType]||"":"";
-  const yearNote=useYear?"Utiliser [current_date format=Y] pour toute mention de l'année.":"Écrire l'année en toutes lettres.";
-  const titleNote=useYear?"wp_title: avec [current_date format=Y]. meta_title: SANS année (%%currentyear%% via SEOPress).":"Sans variable d'année.";
-  const snippetInstr=snippetBg?`BLOC SNIPPET: wp:group fond ${snippetBg}: <!-- wp:group {"style":{"color":{"background":"${snippetBg}"},"spacing":{"padding":{"top":"1rem","bottom":"1rem","left":"1.25rem","right":"1.25rem"}}},"layout":{"type":"constrained"}} --><div class="wp-block-group has-background" style="background-color:${snippetBg};padding:1rem 1.25rem"><!-- wp:paragraph --><p>📌 <strong>Résumé :</strong> [40-60 mots]</p><!-- /wp:paragraph --></div><!-- /wp:group -->`:"BLOC SNIPPET: paragraphe simple 40-60 mots.";
+  const yearNote=useYear
+    ?"⚠️ OBLIGATOIRE: Utiliser [current_date format=Y] pour TOUTES les mentions de l'année dans le corps du texte (jamais écrire l'année en chiffres directement)."
+    :"Écrire l'année en toutes lettres si nécessaire.";
+  const titleNote=useYear
+    ?"wp_title: titre avec [current_date format=Y] pour l'année (ex: 'Les 7 étapes du cycle de vente en [current_date format=Y]'). Le H1 dans html_content DOIT être identique au wp_title avec [current_date format=Y]. meta_title: SANS année (%%currentyear%% via SEOPress, NE PAS mettre dans html_content)."
+    :"wp_title et meta_title sans variable d'année.";
+  const snippetInstr=snippetBg
+    ?`BLOC SNIPPET (fond coloré ${snippetBg}): utiliser exactement ce format Gutenberg:
+<!-- wp:paragraph {"style":{"color":{"background":"${snippetBg}"},"spacing":{"padding":{"top":"1rem","bottom":"1rem","left":"1.25rem","right":"1.25rem"}}}} -->
+<p class="has-background" style="background-color:${snippetBg};padding:1rem 1.25rem">📌 <strong>Résumé :</strong> [réponse directe 40-60 mots, mot-clé dans les 10 premiers mots]</p>
+<!-- /wp:paragraph -->`
+    :`BLOC SNIPPET: <!-- wp:paragraph --><p>📌 <strong>Résumé :</strong> [réponse directe 40-60 mots]</p><!-- /wp:paragraph -->`;
   const linkSaleInstr=articleType==="vente_liens"&&linkSaleConfig?`
 CONTRAINTES VENTE DE LIENS (PRIORITAIRES):
 - URL cible: ${linkSaleConfig.url||"non spécifiée"}
@@ -214,8 +223,9 @@ ORDRE OBLIGATOIRE DU CONTENU (respecter strictement cette séquence):
 [2] INTRO (80 mots max): ${isLM?"hook vérité ligne 1 (jamais 'Dans cet article')":"accroche directe"}, contexte + mot-clé naturel. Dernière ligne de l'intro: <!-- wp:shortcode -->${scIntro}<!-- /wp:shortcode -->
 ⚠️ Le bloc [1] SNIPPET doit impérativement apparaître AVANT le bloc [2] INTRO dans html_content. JAMAIS après.
 [3] CORPS: ${isLM?"H2 humains avec verbe, punchline/section, 2-4 moments signature, 1 stat concrète.":"H2 naturels, exemples concrets."} Paragraphes 3-4 lignes. Transitions fluides. ${yearNote}
-[4] FAQ: 3 questions PAA, réponses 50-150 mots.
+[4] FAQ: 3 questions PAA, réponses 50-150 mots. ${useYear?"Si l'année est mentionnée dans une FAQ: [current_date format=Y]":""}
 [5] CONCLUSION+CTA: ${isLM?"bénéfice concret AVANT l'action.":"CTA clair."} Fin: <!-- wp:shortcode -->${scEnd}<!-- /wp:shortcode -->
+RAPPEL ANNÉE: ${useYear?"Vérifier que wp_title contient [current_date format=Y] et que html_content contient le H1 identique avec [current_date format=Y]. Aucune année en chiffres directs dans le contenu.":""}
 ANTI-STUFFING: >5 mots mot-clé collé=INTERDIT.
 SEO: densité 1-1.5%, sémantique 15+, entités nommées, 2-3 ancres maillage, EEAT.
 
@@ -283,20 +293,45 @@ async function callClaude(prompt,maxTokens=3000){
 
 async function generateImageGemini(subject,geminiKey,paletteColor){
   if(!geminiKey)throw new Error("Clé API Gemini manquante dans le profil éditorial du site");
-  const prompt=`Génère une image à la une pour un article de blog sur le sujet : "${subject}".
-Spécifications:
-- Illustration éditoriale moderne, style flat/semi-flat, minimaliste
-- Sujet principal clair au centre, occupant 60-75% de l'image
-- Fond uni de couleur ${paletteColor}
-- Style cohérent avec un site business/marketing/entrepreneuriat
-- Pas de texte, pas de logo, pas de watermark, pas de photoréalisme
-- Format 16:9, image nette sans bruit visuel`;
-  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${geminiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseModalities:["IMAGE","TEXT"]}})});
+  const colorNames={"#abcee3":"light pastel blue","#f3c05d":"warm golden yellow","#dd6b76":"soft rose red","#ed948f":"salmon pink","#ce9aca":"soft lavender purple"};
+  const colorDesc=colorNames[paletteColor.toLowerCase()]||"soft pastel";
+  const prompt=`Create a featured blog image for an article about: "${subject}".
+Style: modern flat editorial illustration, minimalist, clean lines.
+Composition: main subject centered, occupying 60-75% of the image.
+Background: solid uniform ${colorDesc} color, completely plain with no gradient and no texture.
+IMPORTANT: absolutely NO text, NO hex codes, NO labels, NO numbers, NO logo, NO watermark, NO photorealism.
+Format: horizontal 16:9 landscape ratio, sharp and clean.`;
+  const res=await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${geminiKey}`,
+    {method:"POST",headers:{"Content-Type":"application/json"},
+     body:JSON.stringify({
+       contents:[{parts:[{text:prompt}]}],
+       generationConfig:{responseModalities:["IMAGE"]},
+       imageConfig:{aspectRatio:"16:9"}
+     })
+    }
+  );
   if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`Gemini HTTP ${res.status}`);}
   const data=await res.json();
-  const imgPart=data.candidates?.[0]?.content?.parts?.find(p=>p.inlineData);
-  if(!imgPart?.inlineData?.data)throw new Error("Gemini n'a pas retourné d'image");
-  return{base64:imgPart.inlineData.data,mimeType:imgPart.inlineData.mimeType||"image/jpeg"};
+  const parts=data.candidates?.[0]?.content?.parts||[];
+  const imgPart=parts.find(p=>p.inlineData?.data);
+  if(!imgPart?.inlineData?.data){
+    const reason=data.candidates?.[0]?.finishReason||"unknown";
+    const safety=data.candidates?.[0]?.safetyRatings?.map(r=>`${r.category}:${r.probability}`).join(",")||"";
+    throw new Error(`Gemini n'a pas retourné d'image — finishReason: ${reason}${safety?" | safety: "+safety:""}`);
+  }
+  return{base64:imgPart.inlineData.data,mimeType:imgPart.inlineData.mimeType||"image/png"};
+}
+
+function buildImageFilename(subject){
+  const stopwords=new Set(["comment","pour","les","des","une","avec","dans","sur","par","que","qui","quoi","est","son","ses","tout","plus","bien","mais","sans","pas","comme","aux","ces","cet","cette","nous","vous","leur","leurs","mon","ton","le","la","de","du","en","et","ou","un","au","ce","se","si","ni","ne","ya","via"]);
+  const words=subject.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z\s]/g,"")
+    .split(/\s+/)
+    .filter(w=>w.length>2&&!stopwords.has(w))
+    .slice(0,3);
+  return(words.length>0?words.join("-"):"article")+".jpg";
 }
 
 async function uploadImageToWordPress(profile,imageBase64,mimeType,filename){
@@ -632,7 +667,7 @@ export default function App(){
           let featuredMediaId=null;
           if(acc.imageBase64){
             try{
-              const filename=`featured-${subj.replace(/\s+/g,"-").toLowerCase().slice(0,40)}-${Date.now()}.jpg`;
+              const filename=buildImageFilename(subj);
               const media=await uploadImageToWordPress(site,acc.imageBase64,acc.imageMimeType||"image/jpeg",filename);
               featuredMediaId=media.id;
             }catch(e){console.warn("Image upload failed:",e.message);}
