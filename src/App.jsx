@@ -60,7 +60,7 @@ JSON: {"mots_cles":[{"mot_cle":"...","volume_estime":"...","concurrence":"Faible
   }),
 
   article: (s, k, secondaryKw, site, wordCount, instructions, prevData) => ({
-    system: `${SYSTEM_BASE(site)} Tu es un expert en rédaction SEO avec 10 ans d'expérience. Tu génères des articles HTML complets, structurés, optimisés SEO, directement publiables sur WordPress.`,
+    system: `${SYSTEM_BASE(site)} Tu es un expert en rédaction SEO avec 10 ans d'expérience. Tu génères des articles au format blocs Gutenberg WordPress, optimisés SEO, directement publiables.`,
     user: `Rédige un article SEO de ${wordCount} mots pour le site ${site}.
 
 Sujet: "${s}"
@@ -70,30 +70,45 @@ Audience: ${AUDIENCE}
 Ton: ${TON}
 Objectif: ${OBJECTIF}
 Angle recommandé: ${prevData?.intention?.angle_differenciant || "à définir"}
-Mots-clés longue traîne à intégrer: ${prevData?.longtail?.liste_brute || ""}
+Mots-clés longue traîne à intégrer naturellement: ${prevData?.longtail?.liste_brute || ""}
 Requêtes conversationnelles à couvrir: ${(prevData?.competitors?.requetes_conversationnelles || []).slice(0,10).join(", ")}
 Consignes supplémentaires: ${instructions}
 
+FORMAT OBLIGATOIRE — BLOCS GUTENBERG:
+Tout le contenu doit utiliser le format blocs Gutenberg. Exemples:
+- Paragraphe: <!-- wp:paragraph --><p>texte</p><!-- /wp:paragraph -->
+- H2: <!-- wp:heading {"level":2} --><h2>titre</h2><!-- /wp:heading -->
+- H3: <!-- wp:heading {"level":3} --><h3>titre</h3><!-- /wp:heading -->
+- Liste: <!-- wp:list --><ul><li>item</li></ul><!-- /wp:list -->
+- Citation: <!-- wp:quote --><blockquote><p>citation</p></blockquote><!-- /wp:quote -->
+- Shortcode: <!-- wp:shortcode -->[shortcode]<!-- /wp:shortcode -->
+
 STRUCTURE OBLIGATOIRE:
-- Meta title: accrocheur avec mot-clé au début, inclure %%currentyear%%
-- Meta description: 130-160 caractères, sans mention de l'année
-- H1: identique au meta title mais avec [current_date format=Y] à la place de %%currentyear%%
-- Introduction (75 mots max): présente le sujet, mot-clé naturel, intention de recherche. Terminer par le shortcode [elementor-template id="22062"]
-- Corps: minimum 4 H2 avec mots-clés secondaires, H3/H4 si besoin, transitions fluides entre sections
-- FAQ SEO: 3 questions People Also Ask, réponses 50-150 mots optimisées featured snippets
-- Conclusion avec CTA: ${CTA} + shortcode [elementor-template id="1148"]
+- meta_title: accrocheur avec mot-clé au début. NE PAS mettre d'année — elle sera saisie manuellement dans SEOPress.
+- wp_title: titre de l'article WordPress, avec [current_date format=Y] pour l'année (ex: "Comment créer un business en ligne en [current_date format=Y]")
+- meta_description: 130-160 caractères, sans mention de l'année
+- Introduction (75 mots max en blocs Gutenberg): présente le sujet, mot-clé naturel. Terminer par: <!-- wp:shortcode -->[elementor-template id="22062"]<!-- /wp:shortcode -->
+- Corps: minimum 4 H2, H3 si besoin, transitions fluides entre sections
+- FAQ SEO: 3 questions People Also Ask, réponses 50-150 mots
+- Conclusion avec CTA (${CTA}), terminer par: <!-- wp:shortcode -->[elementor-template id="1148"]<!-- /wp:shortcode -->
+
+RÈGLES LANGUE ET STYLE — ABSOLUMENT OBLIGATOIRE:
+- Français naturel et fluide. Aucune formulation qui ressemble à une liste de mots-clés collés.
+- INTERDIT: titres sans verbe ni sens (ex: "Formation TikTok Ads entrepreneur français gratuite")
+- INTERDIT: promesses creuses ou anglicisées (ex: "passer de débutant à expert en 30 jours", "booster tes résultats", "hacker ta croissance")
+- Les H2/H3 sont des titres naturels qu'un humain lirait avec plaisir, formulés comme de vraies phrases
+- Les mots-clés secondaires s'intègrent naturellement dans le texte, jamais de manière forcée
+- Utiliser [current_date format=Y] pour toute mention de l'année dans le corps du texte
 
 RÈGLES SEO:
 - Densité mot-clé principal: 1% à 1.5%
 - Minimum 15 mots du champ sémantique
 - Entités nommées: marques, outils, concepts liés
-- Tonalité conversationnelle, phrases courtes/longues alternées
 - Proposer 2-3 ancres de maillage interne naturelles
 - Renforcer EEAT: exemples concrets, statistiques, citations
-- Utiliser [current_date format=Y] pour toute mention de l'année dans le corps
 - Suivre les Google Quality Raters Guidelines
 
-JSON: {"meta_title":"...","meta_description":"...","html_content":"<article>...</article>","word_count":0,"reading_time_minutes":0,"seo_score_estimate":0,"champ_semantique":["..."],"ancres_maillage":[{"ancre":"...","sujet_cible":"..."}],"excerpt":"..."}`
+JSON: {"meta_title":"...","meta_description":"...","wp_title":"...","html_content":"<!-- wp:paragraph -->...<!-- /wp:paragraph -->","word_count":0,"reading_time_minutes":0,"seo_score_estimate":0,"champ_semantique":["..."],"ancres_maillage":[{"ancre":"...","sujet_cible":"..."}],"excerpt":"..."}`
   }),
 
 
@@ -138,14 +153,23 @@ async function callClaude(prompt, maxTokens = 3000) {
 async function publishToWordPress(profile, articleData) {
   const credentials = btoa(`${profile.wpUser}:${profile.appPassword}`);
   const cleanUrl = profile.wpUrl.replace(/\/$/, "");
+
+  const seopressTitle = articleData.meta_title
+    ? `${articleData.meta_title} %%currentyear%%`
+    : undefined;
+
   const res = await fetch(`${cleanUrl}/wp-json/wp/v2/posts`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Basic ${credentials}` },
     body: JSON.stringify({
-      title: articleData.meta_title || articleData.title,
+      title: articleData.wp_title || articleData.meta_title || articleData.title,
       content: articleData.html_content,
       excerpt: articleData.excerpt,
       status: "draft",
+      meta: {
+        _seopress_titles_title: seopressTitle,
+        _seopress_titles_desc: articleData.meta_description || "",
+      },
     }),
   });
   if (!res.ok) { const e = await res.json(); throw new Error(e.message || `HTTP ${res.status}`); }
@@ -491,8 +515,9 @@ export default function App() {
 
                   {step.id === "article" && (
                     <div>
-                      <p style={{ margin:"0 0 4px", fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>Title : {data.meta_title}</p>
-                      <p style={{ margin:"0 0 8px", fontSize:11, color:"var(--color-text-secondary)" }}>Meta : {data.meta_description}</p>
+                      <p style={{ margin:"0 0 2px", fontSize:11, color:"var(--color-text-secondary)", fontWeight:500 }}>Titre WP : <span style={{ fontWeight:400, color:"var(--color-text-primary)" }}>{data.wp_title}</span></p>
+                      <p style={{ margin:"0 0 8px", fontSize:11, color:"var(--color-text-secondary)", fontWeight:500 }}>Meta title SEOPress : <span style={{ fontWeight:400, color:"var(--color-text-primary)" }}>{data.meta_title}</span></p>
+                      <p style={{ margin:"0 0 8px", fontSize:11, color:"var(--color-text-secondary)" }}>Meta desc : {data.meta_description}</p>
                       <div style={{ display:"flex", gap:8, marginBottom:10, flexWrap:"wrap" }}>
                         {[{l:"Mots",v:data.word_count},{l:"Lecture",v:`${data.reading_time_minutes} min`},{l:"Score SEO",v:`${data.seo_score_estimate}/100`}].map(m=>(
                           <div key={m.l} style={{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-md)", padding:"5px 14px", textAlign:"center" }}>
