@@ -78,86 +78,135 @@ JSON: {
   }),
 
   article: (s, k, secondaryKw, site, wordCount, instructions, prevData) => ({
-    system: `${SYSTEM_BASE(site)} Tu es un rédacteur SEO expert, humain, différenciant. Tu écris des articles qui rankent top 3, engagent et convertissent. Tu génères du contenu au format blocs Gutenberg WordPress.`,
-    user: `Rédige un article SEO de ${wordCount} mots pour le site ${site}.
+    system: `Tu es un rédacteur editorial senior francophone, spécialisé SEO pour le site ${site}. Nous sommes en ${CURRENT_YEAR}.
+Tu produis des articles qui rankent top 3 ET que les humains veulent vraiment lire.
+Tu travailles en 3 phases obligatoires et séquentielles avant de rédiger.
+Tu réponds UNIQUEMENT en JSON valide, sans backticks, sans commentaires, sans texte avant ou après.`,
+    user: `Rédige un article SEO de ${wordCount} mots sur le sujet: "${s}".
 
-═══ CONTEXTE ═══
-Sujet: "${s}"
-Mot-clé principal: ${prevData?.longtail?.mot_cle_principal || k}
-Mots-clés secondaires: ${(prevData?.longtail?.mots_cles_secondaires || []).join(", ") || "à définir"}
-Intention de recherche: ${prevData?.longtail?.intention_dominante || "informationnelle"}
-Angle éditorial choisi: ${prevData?.longtail?.angle_editorial || prevData?.intention?.angle_differenciant || "à définir"}
-Justification: ${prevData?.longtail?.justification_angle || ""}
-Audience: ${AUDIENCE}
-Ton: ${TON}
-Objectif: ${OBJECTIF}
-Requêtes conversationnelles à couvrir: ${(prevData?.competitors?.requetes_conversationnelles || []).slice(0,8).join(" / ")}
-Consignes supplémentaires: ${instructions}
+Données disponibles:
+- Mot-clé principal confirmé: ${prevData?.longtail?.mot_cle_principal || k}
+- Mots-clés secondaires: ${(prevData?.longtail?.mots_cles_secondaires || []).join(", ") || k}
+- Intention: ${prevData?.longtail?.intention_dominante || "informationnelle"}
+- Angle éditorial: ${prevData?.longtail?.angle_editorial || "guide pratique"}
+- Promesse implicite: ${prevData?.longtail?.justification_angle || ""}
+- Audience: ${AUDIENCE}
+- Ton: ${TON} — tutoiement, "nous" et "on", pas de "je"
+- Objectif conversion: ${CTA}
+- Requêtes à couvrir: ${(prevData?.competitors?.requetes_conversationnelles || []).slice(0,8).join(" / ")}
+- Content gaps concurrents: ${(prevData?.competitors?.content_gaps || []).slice(0,5).join(", ")}
+- Consignes spécifiques: ${instructions}
 
-═══ FORMAT — BLOCS GUTENBERG OBLIGATOIRE ═══
+════════════════════════════════════
+PHASE 1 — PRÉPARATION STRATÉGIQUE (bloquante)
+════════════════════════════════════
+Avant toute rédaction, définis dans le JSON:
+▸ mot_cle_principal_final: 1 seul mot-clé (2-4 mots)
+▸ mots_cles_secondaires_final: exactement 5, simples, 2-4 mots chacun, qu'un humain taperait naturellement
+▸ intention_finale: informationnelle / transactionnelle / navigationnelle
+▸ angle_final: UN seul parmi → "guide débutant" / "erreurs à éviter" / "étude de cas" / "méthode étape par étape"
+▸ promesse_article: 1 phrase qui résume ce que le lecteur va gagner
+▸ hook_differentiant: ce qui rend CET article unique vs tous les autres sur le même sujet
+
+════════════════════════════════════
+PHASE 2 — RÉDACTION AVEC CONTRAINTES STRICTES
+════════════════════════════════════
+
+FORMAT BLOCS GUTENBERG OBLIGATOIRE:
 - Paragraphe: <!-- wp:paragraph --><p>texte</p><!-- /wp:paragraph -->
 - H2: <!-- wp:heading {"level":2} --><h2>titre</h2><!-- /wp:heading -->
 - H3: <!-- wp:heading {"level":3} --><h3>titre</h3><!-- /wp:heading -->
 - Liste: <!-- wp:list --><ul><!-- wp:list-item --><li>item</li><!-- /wp:list-item --></ul><!-- /wp:list -->
-- Citation: <!-- wp:quote --><blockquote class="wp-block-quote"><p>citation</p></blockquote><!-- /wp:quote -->
+- Citation: <!-- wp:quote --><blockquote class="wp-block-quote"><p>texte</p></blockquote><!-- /wp:quote -->
 - Shortcode: <!-- wp:shortcode -->[shortcode]<!-- /wp:shortcode -->
 
-═══ STRUCTURE OBLIGATOIRE ═══
+STRUCTURE EN 6 BLOCS:
 
-1. META DONNÉES:
-   - meta_title: accrocheur, mot-clé au début, SANS année (sera gérée par SEOPress)
-   - wp_title: titre WordPress avec [current_date format=Y] pour l'année
-   - meta_description: 130-160 caractères, incitative, sans année
+BLOC A — Métadonnées:
+▸ meta_title: accrocheur, mot-clé au début, SANS année
+▸ wp_title: même titre + [current_date format=Y] pour l'année
+▸ meta_description: 130-160 caractères, incitative, sans année
 
-2. BLOC RÉPONSE DIRECTE (featured snippet non nommé):
-   Juste avant l'intro — 40 à 60 mots maximum.
-   Réponse claire et directe à la requête principale.
-   Format: paragraphe court ou liste à puces selon la question.
-   Objectif: décrocher la position 0 Google.
-   Envelopper dans un bloc Gutenberg paragraphe ou liste.
+BLOC B — Réponse directe (featured snippet, 40-60 mots):
+▸ Répond directement à la requête principale en 40-60 mots
+▸ Format: paragraphe court si définition, liste si étapes
+▸ Mot-clé dans les 10 premiers mots
+▸ NE PAS titrer ce bloc, ne pas l'introduire — juste la réponse
+▸ Envelopper en bloc Gutenberg
 
-3. INTRODUCTION (75 mots max):
-   Accroche forte (question, stat, situation concrète).
-   Présente le sujet naturellement, mot-clé intégré sans forcer.
-   Terminer par: <!-- wp:shortcode -->[elementor-template id="22062"]<!-- /wp:shortcode -->
+BLOC C — Introduction (75 mots max):
+▸ Ligne 1: accroche forte — question, stat concrète, ou situation que le lecteur reconnaît
+▸ Lignes 2-3: contexte rapide + mot-clé intégré naturellement
+▸ Fin: <!-- wp:shortcode -->[elementor-template id="22062"]<!-- /wp:shortcode -->
 
-4. CORPS DE L'ARTICLE:
-   Minimum 4 H2 naturels et humains.
-   Chaque section: 1 idée principale + exemples concrets + mini retour d'expérience ("on a testé...", "résultat...").
-   Transitions fluides entre sections (pas de rupture abrupte).
-   H3 pour approfondir quand nécessaire.
-   Varier le rythme: phrases courtes percutantes + phrases longues explicatives.
+BLOC D — Corps de l'article:
+▸ Minimum 4 H2 — formulés comme des vraies questions ou affirmations humaines
+▸ Chaque H2: 1 idée centrale + développement + 1 exemple concret minimum
+▸ OBLIGATOIRE dans l'article entier: au moins 2 passages "on a testé… résultat…" ou "erreur fréquente que l'on voit souvent…"
+▸ OBLIGATOIRE: au moins 1 chiffre ou statistique concrète et sourcée
+▸ Paragraphes courts: 3-4 lignes max
+▸ Transitions naturelles entre sections (1 phrase de liaison)
+▸ H3 pour approfondir si nécessaire
+▸ [current_date format=Y] pour toute mention de l'année
 
-5. FAQ (3 questions People Also Ask):
-   Questions formulées comme les gens les cherchent vraiment.
-   Réponses 50-150 mots, optimisées featured snippets.
+BLOC E — FAQ (3 questions):
+▸ Questions formulées comme les gens les tapent vraiment sur Google
+▸ Réponses 50-150 mots, directes, sans intro inutile
 
-6. CONCLUSION + CTA:
-   Résume les points clés (sans les répéter mot pour mot).
-   Appel à l'action: ${CTA}
-   Terminer par: <!-- wp:shortcode -->[elementor-template id="1148"]<!-- /wp:shortcode -->
+BLOC F — Conclusion + CTA:
+▸ Résumé des points clés en 2-3 phrases (pas de répétition mot pour mot)
+▸ Appel à l'action: ${CTA}
+▸ <!-- wp:shortcode -->[elementor-template id="1148"]<!-- /wp:shortcode -->
 
-═══ RÈGLES LANGUE — NON NÉGOCIABLES ═══
-✗ INTERDIT — keyword stuffing: aucune phrase avec mots-clés collés artificiellement
-✗ INTERDIT — titres sur-optimisés: "TikTok Ads débutant budget entrepreneur français"
-✗ INTERDIT — promesses vides: "devenir expert en 30 jours", "booster tes résultats", "hacker ta croissance"
-✗ INTERDIT — anglicismes inutiles quand le français existe
-✗ INTERDIT — H2 sans verbe ou sans sens grammatical
-✓ Les mots-clés secondaires s'intègrent dans des phrases déjà naturelles, jamais placés pour "cocher une case"
-✓ Les H2 sont des vraies questions ou affirmations qu'un humain formulerait
-✓ Exemples concrets obligatoires dans chaque section principale
-✓ Mini retours d'expérience ("on a testé X pendant 3 mois, voilà ce qu'on a observé...")
-✓ Utiliser [current_date format=Y] pour toute mention de l'année dans le corps
+RÈGLE ANTI-KEYWORD STUFFING — CRITIQUE:
+▸ Toute expression de plus de 5 mots qui ressemble à un mot-clé collé = INTERDITE
+▸ Exemples interdits: "tiktok ads débutant entrepreneur budget", "stratégie publicité tiktok business en ligne"
+▸ Test obligatoire pour chaque titre H2/H3: "Est-ce qu'un humain dirait ça à l'oral ?" → Si non → réécrire
+▸ Les mots-clés secondaires s'intègrent dans des phrases déjà naturelles, jamais placés pour cocher une case
+▸ INTERDIT: promesses vides ("booster", "hacker", "devenir expert en X jours")
+▸ INTERDIT: anglicismes inutiles quand le français existe
 
-═══ RÈGLES SEO ═══
-- Densité mot-clé principal: 1% à 1.5% — pas plus
-- Champ sémantique riche (15+ termes liés)
-- Entités nommées: outils, marques, concepts concrets du sujet
-- 2-3 ancres de maillage interne naturelles
-- EEAT: statistiques datées, exemples vérifiables, points de vue d'expert
-- Google Quality Raters Guidelines
+RÈGLES SEO:
+▸ Densité mot-clé principal: 1% à 1.5% — pas plus
+▸ Champ sémantique: 15+ termes liés au sujet
+▸ Entités nommées: outils, marques, concepts concrets
+▸ 2-3 ancres de maillage interne naturelles proposées
+▸ EEAT renforcé: chiffres datés, exemples vérifiables, expertise démontrée
 
-JSON: {"meta_title":"...","meta_description":"...","wp_title":"...","html_content":"<!-- wp:paragraph -->...<!-- /wp:paragraph -->","word_count":0,"reading_time_minutes":0,"seo_score_estimate":0,"champ_semantique":["..."],"ancres_maillage":[{"ancre":"...","sujet_cible":"..."}],"excerpt":"..."}`
+════════════════════════════════════
+PHASE 3 — AUTO-CORRECTION AVANT LIVRAISON
+════════════════════════════════════
+Avant de produire le JSON final, effectue ces 4 vérifications et corrige si nécessaire:
+
+✓ VÉR. 1 — Phrases SEO artificielles?
+  Lis chaque H2/H3 et chaque phrase avec un mot-clé. Si ça sonne faux → réécrire.
+
+✓ VÉR. 2 — Cet article pourrait-il être généré par une IA standard?
+  Si oui → ajouter du concret, du vécu, une erreur réelle, un chiffre précis.
+
+✓ VÉR. 3 — Le lecteur apprend-il quelque chose d'actionnable?
+  Chaque H2 doit apporter au moins 1 conseil applicable immédiatement.
+
+✓ VÉR. 4 — Le début donne-t-il envie de lire la suite?
+  L'accroche doit créer une tension ou poser une question que le lecteur veut résoudre.
+
+JSON: {
+  "mot_cle_principal_final": "...",
+  "mots_cles_secondaires_final": ["...", "...", "...", "...", "..."],
+  "angle_final": "...",
+  "promesse_article": "...",
+  "meta_title": "...",
+  "meta_description": "...",
+  "wp_title": "...",
+  "html_content": "<!-- wp:paragraph -->...<!-- /wp:paragraph -->",
+  "word_count": 0,
+  "reading_time_minutes": 0,
+  "seo_score_estimate": 0,
+  "champ_semantique": ["..."],
+  "ancres_maillage": [{"ancre": "...", "sujet_cible": "..."}],
+  "excerpt": "...",
+  "auto_correction_log": ["VÉR.1: ...", "VÉR.2: ...", "VÉR.3: ...", "VÉR.4: ..."]
+}`
   }),
 
 
@@ -589,8 +638,11 @@ export default function App() {
                   {step.id === "article" && (
                     <div>
                       <p style={{ margin:"0 0 2px", fontSize:11, color:"var(--color-text-secondary)", fontWeight:500 }}>Titre WP : <span style={{ fontWeight:400, color:"var(--color-text-primary)" }}>{data.wp_title}</span></p>
-                      <p style={{ margin:"0 0 8px", fontSize:11, color:"var(--color-text-secondary)", fontWeight:500 }}>Meta title SEOPress : <span style={{ fontWeight:400, color:"var(--color-text-primary)" }}>{data.meta_title}</span></p>
+                      <p style={{ margin:"0 0 4px", fontSize:11, color:"var(--color-text-secondary)", fontWeight:500 }}>Meta title SEOPress : <span style={{ fontWeight:400, color:"var(--color-text-primary)" }}>{data.meta_title}</span></p>
                       <p style={{ margin:"0 0 8px", fontSize:11, color:"var(--color-text-secondary)" }}>Meta desc : {data.meta_description}</p>
+                      {data.promesse_article && (
+                        <p style={{ margin:"0 0 8px", fontSize:12, fontStyle:"italic", color:"var(--color-text-secondary)", borderLeft:"2px solid var(--color-border-secondary)", paddingLeft:8 }}>"{data.promesse_article}"</p>
+                      )}
                       <div style={{ display:"flex", gap:8, marginBottom:10, flexWrap:"wrap" }}>
                         {[{l:"Mots",v:data.word_count},{l:"Lecture",v:`${data.reading_time_minutes} min`},{l:"Score SEO",v:`${data.seo_score_estimate}/100`}].map(m=>(
                           <div key={m.l} style={{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-md)", padding:"5px 14px", textAlign:"center" }}>
@@ -599,9 +651,17 @@ export default function App() {
                           </div>
                         ))}
                       </div>
+                      {(data.auto_correction_log||[]).length > 0 && (
+                        <div style={{ marginBottom:8, background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-md)", padding:"8px 10px" }}>
+                          <p style={{ margin:"0 0 4px", fontSize:11, fontWeight:500, color:"var(--color-text-primary)" }}>Auto-correction</p>
+                          {data.auto_correction_log.map((log,j)=>(
+                            <p key={j} style={{ margin:"2px 0 0", fontSize:11, color:"var(--color-text-secondary)" }}>✓ {log}</p>
+                          ))}
+                        </div>
+                      )}
                       {(data.ancres_maillage||[]).length > 0 && (
                         <div style={{ marginBottom:8 }}>
-                          <p style={{ margin:"0 0 4px", fontSize:11, fontWeight:500, color:"var(--color-text-primary)" }}>Maillage interne suggéré :</p>
+                          <p style={{ margin:"0 0 4px", fontSize:11, fontWeight:500, color:"var(--color-text-primary)" }}>Maillage interne</p>
                           {data.ancres_maillage.map((a,j)=><p key={j} style={{ margin:"2px 0 0", fontSize:11, color:"var(--color-text-secondary)" }}>→ "{a.ancre}" → {a.sujet_cible}</p>)}
                         </div>
                       )}
