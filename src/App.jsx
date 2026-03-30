@@ -168,15 +168,15 @@ function buildArticlePrompt(s,k,site,wc,instructions,prevData,profile,articleTyp
   const isLM=site.toLowerCase().includes("lesmakers");
   const brief=isLM&&articleType?BRIEFS[articleType]||"":"";
   const yearNote=useYear
-    ?"⚠️ OBLIGATOIRE: Utiliser [current_date format=Y] pour TOUTES les mentions de l'année dans le corps du texte (jamais écrire l'année en chiffres directement)."
+    ?"⚠️ RÈGLE ANNÉE: remplacer TOUTE occurrence de l'année (2026, 2025, etc.) par le shortcode [current_date format=Y] — dans le corps, les H2, les H3, partout. Ne jamais écrire un chiffre d'année directement."
     :"Écrire l'année en toutes lettres si nécessaire.";
   const titleNote=useYear
-    ?"wp_title: titre avec [current_date format=Y] pour l'année (ex: 'Les 7 étapes du cycle de vente en [current_date format=Y]'). Le H1 dans html_content DOIT être identique au wp_title avec [current_date format=Y]. meta_title: SANS année (%%currentyear%% via SEOPress, NE PAS mettre dans html_content)."
-    :"wp_title et meta_title sans variable d'année.";
+    ?"wp_title: DOIT contenir [current_date format=Y] pour l'année — ex: 'Notion vs Google Sheets : Guide Comparatif [current_date format=Y]'. Le H1 dans html_content doit reprendre ce même titre avec [current_date format=Y]. meta_title: écrire le titre SANS aucune mention d'année (ni chiffre ni variable). meta_description: écrire sans aucune mention d'année (ni chiffre ni variable)."
+    :"wp_title, meta_title, meta_description: sans variable d'année.";
   const snippetInstr=snippetBg
-    ?`BLOC SNIPPET (fond coloré ${snippetBg}): utiliser exactement ce format Gutenberg:
-<!-- wp:paragraph {"style":{"color":{"background":"${snippetBg}"},"spacing":{"padding":{"top":"1rem","bottom":"1rem","left":"1.25rem","right":"1.25rem"}}}} -->
-<p class="has-background" style="background-color:${snippetBg};padding:1rem 1.25rem">📌 <strong>Résumé :</strong> [réponse directe 40-60 mots, mot-clé dans les 10 premiers mots]</p>
+    ?`BLOC SNIPPET — utiliser EXACTEMENT ce bloc (ne rien changer à la structure):
+<!-- wp:paragraph {"backgroundColor":"","style":{"elements":{"link":{"color":{"text":"var:preset|color|contrast"}}}}} -->
+<p class="has-background" style="background-color:${snippetBg};padding:1em 1.2em;border-radius:6px">📌 <strong>Résumé :</strong> [réponse directe 40-60 mots, mot-clé dans les 10 premiers mots]</p>
 <!-- /wp:paragraph -->`
     :`BLOC SNIPPET: <!-- wp:paragraph --><p>📌 <strong>Résumé :</strong> [réponse directe 40-60 mots]</p><!-- /wp:paragraph -->`;
   const linkSaleInstr=articleType==="vente_liens"&&linkSaleConfig?`
@@ -306,8 +306,10 @@ Format: horizontal 16:9 landscape ratio, sharp and clean.`;
     {method:"POST",headers:{"Content-Type":"application/json"},
      body:JSON.stringify({
        contents:[{parts:[{text:prompt}]}],
-       generationConfig:{responseModalities:["IMAGE"]},
-       imageConfig:{aspectRatio:"16:9"}
+       generationConfig:{
+         responseModalities:["IMAGE"],
+         imageConfig:{aspectRatio:"16:9"}
+       }
      })
     }
   );
@@ -353,7 +355,9 @@ async function publishToWordPress(profile,articleData,featuredMediaId){
   const creds=btoa(`${profile.wpUser}:${profile.appPassword}`);
   const url=profile.wpUrl.replace(/\/$/,"");
   const useYear=profile?.editorial?.useYearVars!==false;
-  const seoTitle=useYear&&articleData.meta_title?`${articleData.meta_title} %%currentyear%%`:articleData.meta_title;
+  const seoTitle=useYear&&articleData.meta_title
+    ?(articleData.meta_title.includes("%%currentyear%%")?articleData.meta_title:`${articleData.meta_title} %%currentyear%%`)
+    :articleData.meta_title;
   const body={title:articleData.wp_title||articleData.meta_title,content:articleData.html_content,excerpt:articleData.excerpt,status:"draft",meta:{_seopress_titles_title:seoTitle,_seopress_titles_desc:articleData.meta_description||""}};
   if(featuredMediaId)body.featured_media=featuredMediaId;
   const res=await fetch(`${url}/wp-json/wp/v2/posts`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Basic ${creds}`},body:JSON.stringify(body)});
