@@ -171,8 +171,8 @@ function buildArticlePrompt(s,k,site,wc,instructions,prevData,profile,articleTyp
     ?"⚠️ RÈGLE ANNÉE: remplacer TOUTE occurrence de l'année (2026, 2025, etc.) par le shortcode [current_date format=Y] — dans le corps, les H2, les H3, partout. Ne jamais écrire un chiffre d'année directement."
     :"Écrire l'année en toutes lettres si nécessaire.";
   const titleNote=useYear
-    ?"wp_title: DOIT contenir [current_date format=Y] pour l'année — ex: 'Notion vs Google Sheets : Guide Comparatif [current_date format=Y]'. Le H1 dans html_content doit reprendre ce même titre avec [current_date format=Y]. meta_title: écrire le titre SANS aucune mention d'année (ni chiffre ni variable). meta_description: écrire sans aucune mention d'année (ni chiffre ni variable)."
-    :"wp_title, meta_title, meta_description: sans variable d'année.";
+    ?"wp_title: DOIT contenir [current_date format=Y] pour l'année — ex: 'Notion vs Google Sheets : Guide [current_date format=Y]'. ⛔ NE PAS mettre de H1 dans html_content — WordPress utilise wp_title comme titre H1 automatiquement. meta_title: sans aucune mention d'année. meta_description: sans aucune mention d'année."
+    :"wp_title sans variable d'année. ⛔ NE PAS mettre de H1 dans html_content. meta_title et meta_description sans année.";
   const snippetInstr=snippetBg
     ?`BLOC SNIPPET — utiliser EXACTEMENT ce bloc (ne rien changer à la structure):
 <!-- wp:paragraph {"backgroundColor":"","style":{"elements":{"link":{"color":{"text":"var:preset|color|contrast"}}}}} -->
@@ -650,19 +650,22 @@ export default function App(){
       }
 
       // Image generation
-      if(!abortRef.current&&acc.article&&!acc.article.error&&profile.geminiKey){
-        setStatus("image","running");
-        try{
-          const paletteColor=IMAGE_PALETTE[paletteIdxRef.current%IMAGE_PALETTE.length];
-          paletteIdxRef.current++;
-          const{base64,mimeType}=await generateImageGemini(subj,profile.geminiKey,paletteColor);
-          setImagePreview(`data:${mimeType};base64,${base64}`);
-          acc.imageBase64=base64;acc.imageMimeType=mimeType;acc.imagePaletteColor=paletteColor;
-          setResults(prev=>({...prev,image:{base64,mimeType,paletteColor}}));
-          setStatus("image","done");
-        }catch(e){setStatus("image","error");setResults(prev=>({...prev,image:{error:e.message}}));}
-      }else if(!profile.geminiKey){
-        setStatus("image","error");setResults(prev=>({...prev,image:{error:"Clé Gemini non configurée dans le profil du site"}}));
+      if(!abortRef.current&&acc.article&&!acc.article.error){
+        if(profile.geminiKey){
+          setStatus("image","running");
+          try{
+            const paletteColor=IMAGE_PALETTE[paletteIdxRef.current%IMAGE_PALETTE.length];
+            paletteIdxRef.current++;
+            const{base64,mimeType}=await generateImageGemini(subj,profile.geminiKey,paletteColor);
+            setImagePreview(`data:${mimeType};base64,${base64}`);
+            acc.imageBase64=base64;acc.imageMimeType=mimeType;acc.imagePaletteColor=paletteColor;
+            setResults(prev=>({...prev,image:{base64,mimeType,paletteColor}}));
+            setStatus("image","done");
+          }catch(e){setStatus("image","error");setResults(prev=>({...prev,image:{error:e.message}}));}
+        }else{
+          setStatus("image","error");
+          setResults(prev=>({...prev,image:{error:"Clé Gemini manquante — va dans ⚙ Sites → ✎ → onglet Image & Gemini"}}));
+        }
       }
 
       // Auto-publish
