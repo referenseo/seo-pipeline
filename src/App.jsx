@@ -1,67 +1,138 @@
 import { useState, useRef, useEffect } from "react";
 
+const CURRENT_YEAR = 2026;
+
 const STEPS = [
-  { id: "competitors", label: "Concurrence",   icon: "🔍", desc: "Top SERP + angles éditoriaux" },
-  { id: "entities",    label: "Entités",        icon: "🏷️",  desc: "Champ sémantique + LSI" },
-  { id: "longtail",   label: "Longue traîne",  icon: "📊", desc: "Variantes + intentions" },
-  { id: "faq",        label: "FAQ & PAA",      icon: "❓",  desc: "Questions fréquentes" },
-  { id: "plan",       label: "Plan",           icon: "📋",  desc: "Structure H1/H2/H3" },
-  { id: "article",    label: "Article",        icon: "✍️",  desc: "Rédaction complète HTML" },
+  { id: "intention",  label: "Intention & Conversion", icon: "🎯", desc: "Décryptage intention + angles CTA" },
+  { id: "competitors",label: "Concurrents",            icon: "🔍", desc: "Top 10 SERP + requêtes conversationnelles" },
+  { id: "longtail",   label: "Longue traîne",          icon: "📊", desc: "15 mots-clés ultra-ciblés" },
+  { id: "article",    label: "Article SEO",            icon: "✍️",  desc: "1500 mots structuré + shortcodes" },
+
 ];
 
+const AUDIENCE = "Personnes qui souhaitent se lancer dans le business en ligne, ou qui sont dans les premières années de leur aventure entrepreneuriale.";
+const CTA = "s'abonner à la newsletter des Makers (lancer et développer son business en ligne)";
+const TON = "Enthousiaste et inspirant. Tutoyer le lecteur. On n'utilise pas le 'je' mais le 'nous' et le 'on'.";
+const OBJECTIF = "Donner des conseils pratiques, pertinents et avisés qui s'appuient sur les grands principes.";
+
 const SYSTEM_BASE = (siteName) =>
-  `Tu es un expert SEO et rédacteur web francophone spécialisé pour le site "${siteName}".
-Tes contenus sont optimisés pour Google, structurés H1/H2/H3, écrits pour les humains d'abord.
+  `Tu es un expert SEO et rédacteur web francophone spécialisé pour le site "${siteName}". Nous sommes en ${CURRENT_YEAR}.
+Tes contenus sont à jour pour ${CURRENT_YEAR}, optimisés pour Google, écrits pour les humains d'abord.
 Tu réponds UNIQUEMENT en JSON valide, sans backticks, sans commentaires, sans texte avant ou après.`;
 
 const PROMPTS = {
-  competitors: (s, k, site) => ({
+  intention: (s, k, secondaryKw, site, wordCount, instructions) => ({
     system: SYSTEM_BASE(site),
-    user: `Analyse la concurrence SEO pour le sujet: "${s}", mot-clé: "${k}". Simule les 10 premiers résultats Google FR, identifie les patterns, angles, et opportunités de différenciation.
-JSON: {"top_results":[{"title":"...","angle":"...","estimated_words":0,"structure_type":"..."}],"content_gaps":["..."],"winning_angle":"...","recommended_approach":"..."}`
+    user: `Tu es un expert en SEO et copywriting de conversion. Analyse le mot-clé: "${k}" pour un article sur "${s}".
+Audience: ${AUDIENCE}
+Ton: ${TON}
+Consignes supplémentaires: ${instructions}
+
+Donne une analyse structurée:
+1. Décryptage intention de recherche (informer/comparer/acheter/agir/résoudre). Émotions et douleurs sous-jacentes.
+2. Niveaux de conscience (note 0-5 pour chaque): inconscient du problème / conscient mais pas des solutions / en phase de comparaison.
+3. Appels à l'action adaptés à chaque étape (lead magnet, call, produit, cas client) et où les insérer.
+4. Angle différenciant: approche éditoriale originale vs concurrents.
+
+JSON: {"intention_type":"...","emotions_douleurs":["..."],"awareness_levels":{"inconscient":{"score":0,"raison":"..."},"conscient_pb":{"score":0,"raison":"..."},"comparaison":{"score":0,"raison":"..."}},"cta_par_etape":[{"etape":"...","cta":"...","placement":"..."}],"angle_differenciant":"...","resume_strategie":"..."}`
   }),
-  entities: (s, k, site) => ({
+
+  competitors: (s, k, secondaryKw, site, wordCount, instructions) => ({
     system: SYSTEM_BASE(site),
-    user: `Pour l'article "${s}" (mot-clé: "${k}"), identifie toutes les entités nommées et concepts sémantiques essentiels.
-JSON: {"persons":["..."],"brands_tools":["..."],"concepts":["..."],"places":["..."],"lsi_keywords":["..."],"semantic_field":["..."]}`
+    user: `Étudie les 10 concurrents les mieux positionnés sur Google FR en ${CURRENT_YEAR} pour la requête "${k}" (sujet: "${s}").
+En t'appuyant sur les relations entités-attributs et l'analyse sémantique, génère au moins 30 requêtes conversationnelles uniques qui déclenchent une recherche web sur ce sujet.
+Consignes supplémentaires: ${instructions}
+
+JSON: {"concurrents":[{"position":1,"titre":"...","angle":"...","nb_mots_estime":0,"points_forts":"..."}],"requetes_conversationnelles":["..."],"content_gaps":["..."],"recommandation":"..."}`
   }),
-  longtail: (s, k, site) => ({
+
+  longtail: (s, k, secondaryKw, site, wordCount, instructions) => ({
     system: SYSTEM_BASE(site),
-    user: `Génère la longue traîne SEO pour "${s}" / "${k}" en français.
-JSON: {"exact_match":["..."],"question_keywords":["..."],"comparison_keywords":["..."],"beginner_keywords":["..."],"expert_keywords":["..."],"secondary_keywords":["..."],"total_search_intent":"informationnelle|transactionnelle|navigationnelle"}`
+    user: `Tu es un expert SEO avec 10 ans d'expérience spécialisé dans "${k}". Dresse une liste de 15 mots-clés longue traîne pour: "${s}".
+Audience: ${AUDIENCE}
+Objectif: ${CTA}
+Critères: requêtes ultra-ciblées, faible concurrence, fort potentiel de conversion, proches du langage naturel.
+Consignes supplémentaires: ${instructions}
+
+Pour chaque mot-clé fournis: mot-clé, volume estimé, niveau concurrence (Faible/Moyen/Élevé), intention (Informationnelle/Transactionnelle/Navigationnelle), étape funnel (Découverte/Considération/Conversion).
+
+JSON: {"mots_cles":[{"mot_cle":"...","volume_estime":"...","concurrence":"Faible|Moyen|Élevé","intention":"...","funnel":"..."}],"liste_brute":"mot1, mot2, mot3..."}`
   }),
-  faq: (s, k, site) => ({
-    system: SYSTEM_BASE(site),
-    user: `Génère FAQ + People Also Ask pour un article sur "${s}" / "${k}".
-JSON: {"paa_questions":[{"question":"...","short_answer":"..."}],"faq_items":[{"question":"...","answer":"..."}],"featured_snippet_opportunity":{"question":"...","ideal_answer":"..."}}`
+
+  article: (s, k, secondaryKw, site, wordCount, instructions, prevData) => ({
+    system: `${SYSTEM_BASE(site)} Tu es un expert en rédaction SEO avec 10 ans d'expérience. Tu génères des articles HTML complets, structurés, optimisés SEO, directement publiables sur WordPress.`,
+    user: `Rédige un article SEO de ${wordCount} mots pour le site ${site}.
+
+Sujet: "${s}"
+Mot-clé principal: "${k}"
+Mots-clés secondaires: ${secondaryKw || "à définir selon le contexte"}
+Audience: ${AUDIENCE}
+Ton: ${TON}
+Objectif: ${OBJECTIF}
+Angle recommandé: ${prevData?.intention?.angle_differenciant || "à définir"}
+Mots-clés longue traîne à intégrer: ${prevData?.longtail?.liste_brute || ""}
+Requêtes conversationnelles à couvrir: ${(prevData?.competitors?.requetes_conversationnelles || []).slice(0,10).join(", ")}
+Consignes supplémentaires: ${instructions}
+
+STRUCTURE OBLIGATOIRE:
+- Meta title: accrocheur avec mot-clé au début, inclure %%currentyear%%
+- Meta description: 130-160 caractères, sans mention de l'année
+- H1: identique au meta title mais avec [current_date format=Y] à la place de %%currentyear%%
+- Introduction (75 mots max): présente le sujet, mot-clé naturel, intention de recherche. Terminer par le shortcode [elementor-template id="22062"]
+- Corps: minimum 4 H2 avec mots-clés secondaires, H3/H4 si besoin, transitions fluides entre sections
+- FAQ SEO: 3 questions People Also Ask, réponses 50-150 mots optimisées featured snippets
+- Conclusion avec CTA: ${CTA} + shortcode [elementor-template id="1148"]
+
+RÈGLES SEO:
+- Densité mot-clé principal: 1% à 1.5%
+- Minimum 15 mots du champ sémantique
+- Entités nommées: marques, outils, concepts liés
+- Tonalité conversationnelle, phrases courtes/longues alternées
+- Proposer 2-3 ancres de maillage interne naturelles
+- Renforcer EEAT: exemples concrets, statistiques, citations
+- Utiliser [current_date format=Y] pour toute mention de l'année dans le corps
+- Suivre les Google Quality Raters Guidelines
+
+JSON: {"meta_title":"...","meta_description":"...","html_content":"<article>...</article>","word_count":0,"reading_time_minutes":0,"seo_score_estimate":0,"champ_semantique":["..."],"ancres_maillage":[{"ancre":"...","sujet_cible":"..."}],"excerpt":"..."}`
   }),
-  plan: (s, k, prev, site) => ({
-    system: SYSTEM_BASE(site),
-    user: `Sur la base des analyses: ${JSON.stringify({competitors:prev.competitors,entities:prev.entities,longtail:prev.longtail,faq:prev.faq})}, crée un plan éditorial SEO pour "${s}" / "${k}".
-JSON: {"h1":"...","meta_title":"...","meta_description":"...","intro_angle":"...","sections":[{"h2":"...","h3s":["..."],"key_entities":["..."],"target_keywords":["..."],"estimated_words":0}],"conclusion_cta":"...","total_estimated_words":0}`
-  }),
-  article: (s, k, prev, site) => ({
-    system: `${SYSTEM_BASE(site)} Génère des articles longs et qualitatifs avec intro accrocheuse, transitions fluides, exemples concrets. HTML sémantique structuré.`,
-    user: `Rédige l'article HTML complet d'après ce plan: ${JSON.stringify(prev.plan)}. Sujet: "${s}", mot-clé: "${k}", LSI: ${JSON.stringify(prev.entities?.lsi_keywords?.slice(0,10))}, FAQ: ${JSON.stringify(prev.faq?.faq_items?.slice(0,3))}.
-JSON: {"html_content":"<article>...</article>","word_count":0,"reading_time_minutes":0,"seo_score_estimate":0,"title":"...","excerpt":"..."}`
-  }),
+
+
 };
 
-async function callClaude(prompt) {
+const STEP_INSTRUCTIONS_KEY = "seo_pipeline_instructions_v3";
+const SITES_KEY = "seo_pipeline_sites_v3";
+
+function loadLS(key, def) { try { return JSON.parse(localStorage.getItem(key) || "null") ?? def; } catch { return def; } }
+function saveLS(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+
+const DEFAULT_INSTRUCTIONS = Object.fromEntries(STEPS.map(s => [s.id, ""]));
+
+async function callClaude(prompt, maxTokens = 3000) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 4000,
+      max_tokens: maxTokens,
       system: prompt.system,
       messages: [{ role: "user", content: prompt.user }],
     }),
   });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || `HTTP ${res.status}`); }
   const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
   const text = data.content?.map(b => b.text || "").join("") || "";
+  if (!text) throw new Error("Réponse vide de l'API");
   const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-  return JSON.parse(clean);
+  const jsonStart = clean.indexOf("{");
+  const jsonEnd = clean.lastIndexOf("}");
+  if (jsonStart === -1 || jsonEnd === -1) throw new Error("JSON introuvable dans la réponse");
+  return JSON.parse(clean.slice(jsonStart, jsonEnd + 1));
 }
 
 async function publishToWordPress(profile, articleData) {
@@ -71,7 +142,7 @@ async function publishToWordPress(profile, articleData) {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Basic ${credentials}` },
     body: JSON.stringify({
-      title: articleData.title,
+      title: articleData.meta_title || articleData.title,
       content: articleData.html_content,
       excerpt: articleData.excerpt,
       status: "draft",
@@ -81,98 +152,69 @@ async function publishToWordPress(profile, articleData) {
   return await res.json();
 }
 
-const STORAGE_KEY = "seo_pipeline_sites_v2";
-function loadSites() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; } }
-function saveSites(s) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch {} }
-
 const Spinner = () => (
   <span style={{ display:"inline-block", width:13, height:13, border:"2px solid var(--color-border-tertiary)", borderTop:"2px solid var(--color-text-secondary)", borderRadius:"50%", animation:"spin 0.8s linear infinite", flexShrink:0 }} />
 );
 
 const Badge = ({ status }) => {
-  const m = { idle:{bg:"var(--color-background-secondary)",color:"var(--color-text-tertiary)",label:"En attente"}, running:{bg:"#FEF3C7",color:"#92400E",label:"En cours…"}, done:{bg:"#D1FAE5",color:"#065F46",label:"Terminé"}, error:{bg:"#FEE2E2",color:"#991B1B",label:"Erreur"} }[status] || {};
+  const m = {
+    idle:    { bg:"var(--color-background-secondary)", color:"var(--color-text-tertiary)",  label:"En attente" },
+    running: { bg:"#FEF3C7",  color:"#92400E",  label:"En cours…" },
+    done:    { bg:"#D1FAE5",  color:"#065F46",  label:"Terminé" },
+    error:   { bg:"#FEE2E2",  color:"#991B1B",  label:"Erreur" },
+  }[status] || {};
   return <span style={{ fontSize:11, padding:"2px 8px", borderRadius:99, background:m.bg, color:m.color, fontWeight:500, whiteSpace:"nowrap" }}>{m.label}</span>;
 };
 
 function SiteModal({ sites, onSave, onSelect, onDelete, onClose }) {
   const [form, setForm] = useState({ name:"", url:"", user:"", password:"" });
   const [editing, setEditing] = useState(null);
-  const [localSites, setLocalSites] = useState(sites);
+  const [local, setLocal] = useState(sites);
   const canSave = form.name && form.url && form.user && form.password;
 
   const handleSave = () => {
     if (!canSave) return;
     const entry = { name:form.name, wpUrl:form.url, wpUser:form.user, appPassword:form.password };
-    const updated = editing !== null ? localSites.map((s,i)=>i===editing?entry:s) : [...localSites, entry];
-    setLocalSites(updated);
-    onSave(updated);
-    setForm({ name:"", url:"", user:"", password:"" });
-    setEditing(null);
-  };
-
-  const handleEdit = (i) => {
-    const s = localSites[i];
-    setForm({ name:s.name, url:s.wpUrl, user:s.wpUser, password:s.appPassword });
-    setEditing(i);
-  };
-
-  const handleDelete = (i) => {
-    const updated = localSites.filter((_,idx)=>idx!==i);
-    setLocalSites(updated);
-    onDelete(updated);
+    const updated = editing !== null ? local.map((s,i)=>i===editing?entry:s) : [...local, entry];
+    setLocal(updated); onSave(updated);
+    setForm({ name:"", url:"", user:"", password:"" }); setEditing(null);
   };
 
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.35)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
       <div style={{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)", width:"100%", maxWidth:500, maxHeight:"85vh", overflowY:"auto", padding:"1.25rem" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem" }}>
-          <h3 style={{ margin:0, fontSize:16, fontWeight:500, color:"var(--color-text-primary)" }}>Mes sites WordPress</h3>
-          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:20, cursor:"pointer", color:"var(--color-text-secondary)", lineHeight:1, padding:"0 4px" }}>×</button>
+          <h3 style={{ margin:0, fontSize:16, fontWeight:500 }}>Mes sites WordPress</h3>
+          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:20, cursor:"pointer", color:"var(--color-text-secondary)", padding:"0 4px" }}>×</button>
         </div>
-
-        {localSites.length > 0 && (
+        {local.length > 0 && (
           <div style={{ marginBottom:"1rem", display:"flex", flexDirection:"column", gap:6 }}>
-            {localSites.map((site, i) => (
+            {local.map((site, i) => (
               <div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-md)", border:"0.5px solid var(--color-border-tertiary)" }}>
                 <div style={{ flex:1, minWidth:0 }}>
                   <p style={{ margin:0, fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>{site.name}</p>
-                  <p style={{ margin:0, fontSize:11, color:"var(--color-text-secondary)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{site.wpUrl} · {site.wpUser}</p>
+                  <p style={{ margin:0, fontSize:11, color:"var(--color-text-secondary)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{site.wpUrl}</p>
                 </div>
-                <button onClick={() => onSelect(site)} style={{ fontSize:12, padding:"4px 10px", color:"var(--color-text-info)", background:"none", border:"0.5px solid var(--color-border-info)", borderRadius:"var(--border-radius-md)", cursor:"pointer" }}>Choisir</button>
-                <button onClick={() => handleEdit(i)} style={{ fontSize:12, padding:"4px 8px", background:"none", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-md)", cursor:"pointer", color:"var(--color-text-secondary)" }}>✎</button>
-                <button onClick={() => handleDelete(i)} style={{ fontSize:12, padding:"4px 8px", background:"none", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-md)", cursor:"pointer", color:"var(--color-text-danger)" }}>✕</button>
+                <button onClick={()=>onSelect(site)} style={{ fontSize:12, padding:"4px 10px", color:"var(--color-text-info)", background:"none", border:"0.5px solid var(--color-border-info)", borderRadius:"var(--border-radius-md)", cursor:"pointer" }}>Choisir</button>
+                <button onClick={()=>{ const s=local[i]; setForm({name:s.name,url:s.wpUrl,user:s.wpUser,password:s.appPassword}); setEditing(i); }} style={{ fontSize:12, padding:"4px 8px", background:"none", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-md)", cursor:"pointer" }}>✎</button>
+                <button onClick={()=>{ const u=local.filter((_,idx)=>idx!==i); setLocal(u); onDelete(u); }} style={{ fontSize:12, padding:"4px 8px", background:"none", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-md)", cursor:"pointer", color:"var(--color-text-danger)" }}>✕</button>
               </div>
             ))}
           </div>
         )}
-
-        <div style={{ borderTop: localSites.length > 0 ? "0.5px solid var(--color-border-tertiary)" : "none", paddingTop: localSites.length > 0 ? "1rem" : 0 }}>
-          <p style={{ margin:"0 0 10px", fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>
-            {editing !== null ? "Modifier le site" : "Ajouter un site"}
-          </p>
+        <div style={{ borderTop: local.length > 0 ? "0.5px solid var(--color-border-tertiary)" : "none", paddingTop: local.length > 0 ? "1rem" : 0 }}>
+          <p style={{ margin:"0 0 10px", fontSize:13, fontWeight:500 }}>{editing !== null ? "Modifier" : "Ajouter un site"}</p>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
-            {[
-              { key:"name", lbl:"Nom du site", ph:"lesmakers.fr", type:"text" },
-              { key:"url",  lbl:"URL WordPress", ph:"https://lesmakers.fr", type:"url" },
-              { key:"user", lbl:"Identifiant WP", ph:"admin", type:"text" },
-              { key:"password", lbl:"Application Password", ph:"xxxx xxxx xxxx xxxx", type:"password" },
-            ].map(f => (
-              <div key={f.key}>
-                <label style={{ fontSize:11, color:"var(--color-text-secondary)", display:"block", marginBottom:3 }}>
-                  {f.lbl}
-                  {f.key === "password" && <a href="https://wordpress.org/documentation/article/application-passwords/" target="_blank" rel="noopener" style={{ color:"var(--color-text-info)", fontSize:10, marginLeft:4 }}>(aide)</a>}
-                </label>
-                <input type={f.type} value={form[f.key]} onChange={e=>setForm({...form,[f.key]:e.target.value})} placeholder={f.ph} style={{ width:"100%", boxSizing:"border-box" }} />
+            {[{k:"name",l:"Nom du site",p:"lesmakers.fr",t:"text"},{k:"url",l:"URL WordPress",p:"https://lesmakers.fr",t:"url"},{k:"user",l:"Identifiant WP",p:"admin",t:"text"},{k:"password",l:"Application Password",p:"xxxx xxxx xxxx xxxx",t:"password"}].map(f=>(
+              <div key={f.k}>
+                <label style={{ fontSize:11, color:"var(--color-text-secondary)", display:"block", marginBottom:3 }}>{f.l}</label>
+                <input type={f.t} value={form[f.k]} onChange={e=>setForm({...form,[f.k]:e.target.value})} placeholder={f.p} style={{ width:"100%", boxSizing:"border-box" }} />
               </div>
             ))}
           </div>
           <div style={{ display:"flex", gap:8 }}>
-            <button onClick={handleSave} disabled={!canSave} style={{ padding:"7px 16px", fontWeight:500, opacity:canSave?1:0.45, cursor:canSave?"pointer":"not-allowed" }}>
-              {editing !== null ? "Enregistrer" : "+ Ajouter"}
-            </button>
-            {editing !== null && (
-              <button onClick={()=>{ setEditing(null); setForm({name:"",url:"",user:"",password:""}); }} style={{ fontSize:12, padding:"6px 12px", color:"var(--color-text-secondary)" }}>Annuler</button>
-            )}
+            <button onClick={handleSave} disabled={!canSave} style={{ padding:"7px 16px", fontWeight:500, opacity:canSave?1:0.45 }}>{editing!==null?"Enregistrer":"+ Ajouter"}</button>
+            {editing!==null && <button onClick={()=>{setEditing(null);setForm({name:"",url:"",user:"",password:""});}} style={{ fontSize:12, padding:"6px 12px" }}>Annuler</button>}
           </div>
         </div>
       </div>
@@ -181,62 +223,70 @@ function SiteModal({ sites, onSave, onSelect, onDelete, onClose }) {
 }
 
 export default function App() {
-  const [subject, setSubject] = useState("");
-  const [keyword, setKeyword] = useState("");
-  const [sites, setSites] = useState([]);
-  const [activeSite, setActiveSite] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [results, setResults] = useState({});
-  const [stepStatus, setStepStatus] = useState({});
-  const [running, setRunning] = useState(false);
-  const [wpStatus, setWpStatus] = useState(null);
-  const [wpResult, setWpResult] = useState(null);
+  const [subject, setSubject]         = useState("");
+  const [keyword, setKeyword]         = useState("");
+  const [secondaryKw, setSecondaryKw] = useState("");
+  const [wordCount, setWordCount]     = useState(1500);
+  const [instructions, setInstructions] = useState(DEFAULT_INSTRUCTIONS);
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [activeInstrTab, setActiveInstrTab] = useState(STEPS[0].id);
+  const [sites, setSites]             = useState([]);
+  const [activeSite, setActiveSite]   = useState(null);
+  const [showModal, setShowModal]     = useState(false);
+  const [results, setResults]         = useState({});
+  const [stepStatus, setStepStatus]   = useState({});
+  const [running, setRunning]         = useState(false);
+  const [wpStatus, setWpStatus]       = useState(null);
+  const [wpResult, setWpResult]       = useState(null);
   const [expandedStep, setExpandedStep] = useState(null);
   const abortRef = useRef(false);
 
   useEffect(() => {
-    const s = loadSites();
+    const s = loadLS(SITES_KEY, []);
+    const instr = loadLS(STEP_INSTRUCTIONS_KEY, DEFAULT_INSTRUCTIONS);
     setSites(s);
+    setInstructions(instr);
     if (s.length > 0) setActiveSite(s[0]);
   }, []);
 
+  const saveInstructions = (updated) => { setInstructions(updated); saveLS(STEP_INSTRUCTIONS_KEY, updated); };
+  const handleSiteSave   = (u) => { setSites(u); saveLS(SITES_KEY, u); if (!activeSite && u.length>0) setActiveSite(u[0]); };
+  const handleSiteSelect = (s) => { setActiveSite(s); setShowModal(false); };
+  const handleSiteDelete = (u) => { setSites(u); saveLS(SITES_KEY, u); if (activeSite && !u.find(s=>s.name===activeSite.name)) setActiveSite(u[0]||null); };
+
   const isReady = subject.trim() && keyword.trim();
-  const isDone = stepStatus["article"] === "done";
+  const isDone  = stepStatus["article"] === "done";
   const completedCount = STEPS.filter(s => stepStatus[s.id] === "done").length;
   const setStatus = (id, s) => setStepStatus(prev => ({ ...prev, [id]: s }));
-
-  function handleSiteSave(updated) { setSites(updated); saveSites(updated); if (!activeSite && updated.length > 0) setActiveSite(updated[0]); }
-  function handleSiteSelect(site) { setActiveSite(site); setShowModal(false); }
-  function handleSiteDelete(updated) { setSites(updated); saveSites(updated); if (activeSite && !updated.find(s=>s.name===activeSite.name)) setActiveSite(updated[0]||null); }
 
   async function runPipeline() {
     if (!isReady) return;
     abortRef.current = false;
-    setRunning(true);
-    setResults({});
-    setStepStatus({});
-    setWpStatus(null);
-    setWpResult(null);
+    setRunning(true); setResults({}); setStepStatus({}); setWpStatus(null); setWpResult(null);
     const acc = {};
-    const siteName = activeSite?.name || "mon site";
+    const siteName = activeSite?.name || "lesmakers.fr";
+
+    const stepConfigs = [
+      { id:"intention",   tokens:2000, build: ()=>PROMPTS.intention(subject,keyword,secondaryKw,siteName,wordCount,instructions.intention||"") },
+      { id:"competitors", tokens:3000, build: ()=>PROMPTS.competitors(subject,keyword,secondaryKw,siteName,wordCount,instructions.competitors||"") },
+      { id:"longtail",    tokens:2500, build: ()=>PROMPTS.longtail(subject,keyword,secondaryKw,siteName,wordCount,instructions.longtail||"") },
+      { id:"article",     tokens:6000, build: ()=>PROMPTS.article(subject,keyword,secondaryKw,siteName,wordCount,instructions.article||"",acc) },
+
+    ];
+
     try {
-      for (const { id } of STEPS) {
+      for (const cfg of stepConfigs) {
         if (abortRef.current) break;
-        setStatus(id, "running");
+        setStatus(cfg.id, "running");
         try {
-          const p = id==="competitors" ? PROMPTS.competitors(subject,keyword,siteName)
-                  : id==="entities"    ? PROMPTS.entities(subject,keyword,siteName)
-                  : id==="longtail"    ? PROMPTS.longtail(subject,keyword,siteName)
-                  : id==="faq"         ? PROMPTS.faq(subject,keyword,siteName)
-                  : id==="plan"        ? PROMPTS.plan(subject,keyword,acc,siteName)
-                  :                      PROMPTS.article(subject,keyword,acc,siteName);
-          const data = await callClaude(p);
-          acc[id] = data;
-          setResults(prev => ({ ...prev, [id]: data }));
-          setStatus(id, "done");
+          const data = await callClaude(cfg.build(), cfg.tokens);
+          acc[cfg.id] = data;
+          setResults(prev => ({ ...prev, [cfg.id]: data }));
+          setStatus(cfg.id, "done");
         } catch(e) {
-          setStatus(id, "error");
-          acc[id] = { error: e.message };
+          setStatus(cfg.id, "error");
+          acc[cfg.id] = { error: e.message };
+          setResults(prev => ({ ...prev, [cfg.id]: { error: e.message } }));
         }
       }
     } finally { setRunning(false); }
@@ -249,36 +299,28 @@ export default function App() {
     setWpStatus("publishing");
     try {
       const res = await publishToWordPress(activeSite, article);
-      setWpResult(res);
-      setWpStatus("published");
+      setWpResult(res); setWpStatus("published");
     } catch(e) {
-      setWpStatus("error_wp");
-      setWpResult({ error: e.message });
+      setWpStatus("error_wp"); setWpResult({ error: e.message });
     }
   }
 
   return (
-    <div style={{ fontFamily:"var(--font-sans)", maxWidth:700, margin:"0 auto", padding:"1.5rem 1rem" }}>
+    <div style={{ fontFamily:"var(--font-sans)", maxWidth:720, margin:"0 auto", padding:"1.5rem 1rem" }}>
       <style>{`
         @keyframes spin { to { transform:rotate(360deg); } }
         @keyframes fadeIn { from { opacity:0; transform:translateY(3px); } to { opacity:1; transform:translateY(0); } }
         .step-row { transition:background 0.12s; border-radius:var(--border-radius-md); }
         .step-row:hover { background:var(--color-background-secondary) !important; }
+        .instr-tab { padding:5px 12px; border:none; border-radius:var(--border-radius-md); cursor:pointer; font-size:12px; background:none; color:var(--color-text-secondary); transition:all 0.15s; }
+        .instr-tab.active { background:var(--color-background-primary); color:var(--color-text-primary); font-weight:500; border:0.5px solid var(--color-border-tertiary); }
       `}</style>
 
-      {showModal && (
-        <SiteModal
-          sites={sites}
-          onSave={handleSiteSave}
-          onSelect={handleSiteSelect}
-          onDelete={handleSiteDelete}
-          onClose={() => setShowModal(false)}
-        />
-      )}
+      {showModal && <SiteModal sites={sites} onSave={handleSiteSave} onSelect={handleSiteSelect} onDelete={handleSiteDelete} onClose={()=>setShowModal(false)} />}
 
       <div style={{ marginBottom:"1.25rem" }}>
-        <h2 style={{ fontSize:20, fontWeight:500, margin:"0 0 2px", color:"var(--color-text-primary)" }}>Pipeline SEO Automatisé</h2>
-        <p style={{ fontSize:13, color:"var(--color-text-secondary)", margin:0 }}>De l'idée à la publication WordPress en 6 étapes IA</p>
+        <h2 style={{ fontSize:20, fontWeight:500, margin:"0 0 2px" }}>Pipeline SEO — Les Makers</h2>
+        <p style={{ fontSize:13, color:"var(--color-text-secondary)", margin:0 }}>De l'idée à la publication WordPress en 4 étapes IA</p>
       </div>
 
       <div style={{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)", padding:"1rem 1.25rem", marginBottom:"0.75rem" }}>
@@ -286,36 +328,78 @@ export default function App() {
         <div style={{ marginBottom:"0.875rem" }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
             <span style={{ fontSize:12, color:"var(--color-text-secondary)", fontWeight:500 }}>Site cible</span>
-            <button onClick={() => setShowModal(true)} style={{ fontSize:11, padding:"3px 10px" }}>
-              {sites.length === 0 ? "+ Ajouter un site" : "⚙ Gérer les sites"}
-            </button>
+            <button onClick={()=>setShowModal(true)} style={{ fontSize:11, padding:"3px 10px" }}>{sites.length===0?"+ Ajouter un site":"⚙ Gérer les sites"}</button>
           </div>
-          {sites.length === 0 ? (
-            <p style={{ fontSize:12, color:"var(--color-text-tertiary)", margin:0 }}>Aucun site configuré — cliquez sur Ajouter pour paramétrer votre WordPress.</p>
-          ) : (
-            <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-              {sites.map((site, i) => {
-                const isActive = activeSite?.name === site.name;
-                return (
-                  <button key={i} onClick={() => setActiveSite(site)} style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"5px 11px", borderRadius:"var(--border-radius-md)", border: isActive ? "1px solid var(--color-border-primary)" : "0.5px solid var(--color-border-secondary)", background: isActive ? "var(--color-background-primary)" : "var(--color-background-secondary)", cursor:"pointer", fontSize:12, fontWeight: isActive ? 500 : 400, color:"var(--color-text-primary)", transition:"all 0.15s" }}>
-                    {isActive && <span style={{ width:6, height:6, borderRadius:"50%", background:"#10B981", display:"inline-block", flexShrink:0 }} />}
-                    {site.name}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          {sites.length === 0
+            ? <p style={{ fontSize:12, color:"var(--color-text-tertiary)", margin:0 }}>Aucun site configuré.</p>
+            : <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                {sites.map((site,i) => {
+                  const isActive = activeSite?.name === site.name;
+                  return (
+                    <button key={i} onClick={()=>setActiveSite(site)} style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"5px 11px", borderRadius:"var(--border-radius-md)", border: isActive?"1px solid var(--color-border-primary)":"0.5px solid var(--color-border-secondary)", background: isActive?"var(--color-background-primary)":"var(--color-background-secondary)", cursor:"pointer", fontSize:12, fontWeight:isActive?500:400, color:"var(--color-text-primary)" }}>
+                      {isActive && <span style={{ width:6, height:6, borderRadius:"50%", background:"#10B981", display:"inline-block" }} />}
+                      {site.name}
+                    </button>
+                  );
+                })}
+              </div>
+          }
         </div>
 
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:12 }}>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
           <div>
             <label style={{ fontSize:12, color:"var(--color-text-secondary)", display:"block", marginBottom:4 }}>Sujet de l'article</label>
-            <input type="text" value={subject} onChange={e=>setSubject(e.target.value)} placeholder="ex: Les meilleurs outils no-code 2025" style={{ width:"100%", boxSizing:"border-box" }} disabled={running} />
+            <input type="text" value={subject} onChange={e=>setSubject(e.target.value)} placeholder="ex: Comment créer un business en ligne" style={{ width:"100%", boxSizing:"border-box" }} disabled={running} />
           </div>
           <div>
             <label style={{ fontSize:12, color:"var(--color-text-secondary)", display:"block", marginBottom:4 }}>Mot-clé principal</label>
-            <input type="text" value={keyword} onChange={e=>setKeyword(e.target.value)} placeholder="ex: outils no-code" style={{ width:"100%", boxSizing:"border-box" }} disabled={running} />
+            <input type="text" value={keyword} onChange={e=>setKeyword(e.target.value)} placeholder="ex: business en ligne" style={{ width:"100%", boxSizing:"border-box" }} disabled={running} />
           </div>
+        </div>
+
+        <div style={{ marginBottom:10 }}>
+          <label style={{ fontSize:12, color:"var(--color-text-secondary)", display:"block", marginBottom:4 }}>Mots-clés secondaires <span style={{ color:"var(--color-text-tertiary)" }}>(optionnel)</span></label>
+          <input type="text" value={secondaryKw} onChange={e=>setSecondaryKw(e.target.value)} placeholder="ex: créer un site web, business rentable, revenus passifs" style={{ width:"100%", boxSizing:"border-box" }} disabled={running} />
+        </div>
+
+        <div style={{ marginBottom:12 }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6 }}>
+            <label style={{ fontSize:12, color:"var(--color-text-secondary)", fontWeight:500 }}>Longueur de l'article</label>
+            <span style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>{wordCount} mots</span>
+          </div>
+          <input type="range" min={800} max={3000} step={100} value={wordCount} onChange={e=>setWordCount(Number(e.target.value))} style={{ width:"100%" }} disabled={running} />
+          <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, color:"var(--color-text-tertiary)", marginTop:2 }}>
+            <span>800 (court)</span><span>1500 (standard)</span><span>3000 (long)</span>
+          </div>
+        </div>
+
+        <div style={{ marginBottom:12 }}>
+          <button onClick={()=>setShowInstructions(!showInstructions)} style={{ fontSize:12, padding:"5px 12px", display:"flex", alignItems:"center", gap:6 }}>
+            {showInstructions ? "▲" : "▼"} Consignes par étape
+          </button>
+          {showInstructions && (
+            <div style={{ marginTop:10, background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-md)", border:"0.5px solid var(--color-border-tertiary)", padding:"12px", animation:"fadeIn 0.2s ease" }}>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginBottom:10 }}>
+                {STEPS.map(step => (
+                  <button key={step.id} onClick={()=>setActiveInstrTab(step.id)} className={"instr-tab"+(activeInstrTab===step.id?" active":"")}>
+                    {step.icon} {step.label}
+                  </button>
+                ))}
+              </div>
+              {STEPS.map(step => activeInstrTab === step.id && (
+                <div key={step.id}>
+                  <label style={{ fontSize:11, color:"var(--color-text-secondary)", display:"block", marginBottom:4 }}>Consignes pour "{step.label}"</label>
+                  <textarea
+                    value={instructions[step.id] || ""}
+                    onChange={e => saveInstructions({...instructions, [step.id]: e.target.value})}
+                    placeholder={`Consignes spécifiques pour l'étape ${step.label}…`}
+                    rows={3}
+                    style={{ width:"100%", boxSizing:"border-box", fontSize:12, padding:"8px", borderRadius:"var(--border-radius-md)", border:"0.5px solid var(--color-border-tertiary)", background:"var(--color-background-primary)", color:"var(--color-text-primary)", resize:"vertical", fontFamily:"var(--font-sans)" }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
@@ -325,7 +409,7 @@ export default function App() {
           {running && (
             <>
               <Spinner />
-              <button onClick={() => { abortRef.current=true; setRunning(false); }} style={{ fontSize:12, padding:"5px 12px", color:"var(--color-text-secondary)" }}>Arrêter</button>
+              <button onClick={()=>{abortRef.current=true;setRunning(false);}} style={{ fontSize:12, padding:"5px 12px", color:"var(--color-text-secondary)" }}>Arrêter</button>
             </>
           )}
           {!running && completedCount > 0 && (
@@ -343,10 +427,10 @@ export default function App() {
       <div style={{ display:"flex", flexDirection:"column", gap:5, marginBottom:"0.75rem" }}>
         {STEPS.map((step, i) => {
           const status = stepStatus[step.id] || "idle";
-          const data = results[step.id];
-          const isExp = expandedStep === step.id;
+          const data   = results[step.id];
+          const isExp  = expandedStep === step.id;
           return (
-            <div key={step.id} className="step-row" style={{ border:"0.5px solid var(--color-border-tertiary)", overflow:"hidden", animation: status==="done" ? "fadeIn 0.25s ease" : "none" }}>
+            <div key={step.id} className="step-row" style={{ border:"0.5px solid var(--color-border-tertiary)", overflow:"hidden", animation:status==="done"?"fadeIn 0.25s ease":"none" }}>
               <div style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 12px" }}>
                 <span style={{ fontSize:15, minWidth:20, textAlign:"center" }}>{step.icon}</span>
                 <div style={{ flex:1 }}>
@@ -354,78 +438,66 @@ export default function App() {
                   <span style={{ fontSize:11, color:"var(--color-text-secondary)", marginLeft:8 }}>{step.desc}</span>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                  {status === "running" && <Spinner />}
+                  {status==="running" && <Spinner />}
                   <Badge status={status} />
-                  {data && (
-                    <button onClick={() => setExpandedStep(isExp?null:step.id)} style={{ fontSize:11, padding:"2px 6px", color:"var(--color-text-secondary)", background:"none", border:"none", cursor:"pointer" }}>
-                      {isExp ? "▲" : "▼"}
+                  {data && !data.error && (
+                    <button onClick={()=>setExpandedStep(isExp?null:step.id)} style={{ fontSize:11, padding:"2px 6px", color:"var(--color-text-secondary)", background:"none", border:"none", cursor:"pointer" }}>
+                      {isExp?"▲":"▼"}
                     </button>
                   )}
+                  {data?.error && <span style={{ fontSize:11, color:"#991B1B" }} title={data.error}>⚠ {data.error.slice(0,40)}</span>}
                 </div>
               </div>
 
-              {isExp && data && (
+              {isExp && data && !data.error && (
                 <div style={{ borderTop:"0.5px solid var(--color-border-tertiary)", padding:"10px 12px", background:"var(--color-background-secondary)", animation:"fadeIn 0.2s ease" }}>
 
-                  {step.id === "competitors" && (
-                    <div>
-                      <p style={{ margin:"0 0 6px", fontSize:12 }}><strong style={{ color:"var(--color-text-primary)" }}>Angle gagnant :</strong> <span style={{ color:"var(--color-text-secondary)" }}>{data.winning_angle}</span></p>
-                      <p style={{ margin:"0 0 8px", fontSize:12, color:"var(--color-text-secondary)" }}>{data.recommended_approach}</p>
-                      <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
-                        {(data.content_gaps||[]).slice(0,6).map((g,j) => <span key={j} style={{ fontSize:11, padding:"2px 8px", background:"var(--color-background-info)", color:"var(--color-text-info)", borderRadius:99 }}>{g}</span>)}
-                      </div>
+                  {step.id === "intention" && (
+                    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                      <p style={{ margin:0, fontSize:12 }}><strong style={{ color:"var(--color-text-primary)" }}>Intention :</strong> <span style={{ color:"var(--color-text-secondary)" }}>{data.intention_type}</span></p>
+                      <p style={{ margin:0, fontSize:12 }}><strong style={{ color:"var(--color-text-primary)" }}>Angle différenciant :</strong> <span style={{ color:"var(--color-text-secondary)" }}>{data.angle_differenciant}</span></p>
+                      <p style={{ margin:0, fontSize:12, color:"var(--color-text-secondary)" }}>{data.resume_strategie}</p>
+                      {(data.cta_par_etape||[]).slice(0,2).map((c,j)=>(
+                        <div key={j} style={{ padding:"6px 10px", background:"var(--color-background-primary)", borderRadius:"var(--border-radius-md)", border:"0.5px solid var(--color-border-tertiary)" }}>
+                          <p style={{ margin:0, fontSize:11, fontWeight:500, color:"var(--color-text-primary)" }}>{c.etape}</p>
+                          <p style={{ margin:"2px 0 0", fontSize:11, color:"var(--color-text-secondary)" }}>{c.cta} → {c.placement}</p>
+                        </div>
+                      ))}
                     </div>
                   )}
 
-                  {step.id === "entities" && (
-                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-                      {[["Concepts",data.concepts],["LSI",data.lsi_keywords],["Outils",data.brands_tools],["Champ sémantique",data.semantic_field]].map(([lbl,arr]) => arr?.length > 0 && (
-                        <div key={lbl}>
-                          <p style={{ fontSize:11, color:"var(--color-text-secondary)", margin:"0 0 4px" }}>{lbl}</p>
-                          <div style={{ display:"flex", flexWrap:"wrap", gap:3 }}>
-                            {arr.slice(0,6).map((e,j) => <span key={j} style={{ fontSize:11, padding:"2px 6px", background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:4, color:"var(--color-text-primary)" }}>{e}</span>)}
-                          </div>
-                        </div>
-                      ))}
+                  {step.id === "competitors" && (
+                    <div>
+                      <p style={{ margin:"0 0 8px", fontSize:12, color:"var(--color-text-secondary)" }}>{data.recommandation}</p>
+                      <p style={{ margin:"0 0 6px", fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>Requêtes conversationnelles ({(data.requetes_conversationnelles||[]).length})</p>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:3, marginBottom:8 }}>
+                        {(data.requetes_conversationnelles||[]).slice(0,8).map((r,j)=><span key={j} style={{ fontSize:11, padding:"2px 7px", background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:4 }}>{r}</span>)}
+                      </div>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:3 }}>
+                        {(data.content_gaps||[]).slice(0,5).map((g,j)=><span key={j} style={{ fontSize:11, padding:"2px 8px", background:"var(--color-background-info)", color:"var(--color-text-info)", borderRadius:99 }}>Gap : {g}</span>)}
+                      </div>
                     </div>
                   )}
 
                   {step.id === "longtail" && (
                     <div>
-                      <p style={{ margin:"0 0 6px", fontSize:12 }}><strong style={{ color:"var(--color-text-primary)" }}>Intention :</strong> <span style={{ color:"var(--color-text-secondary)" }}>{data.total_search_intent}</span></p>
-                      <div style={{ display:"flex", flexWrap:"wrap", gap:3 }}>
-                        {[...(data.question_keywords||[]),...(data.comparison_keywords||[]),...(data.beginner_keywords||[])].slice(0,12).map((k,j)=><span key={j} style={{ fontSize:11, padding:"2px 7px", background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:4, color:"var(--color-text-primary)" }}>{k}</span>)}
+                      <p style={{ margin:"0 0 8px", fontSize:11, color:"var(--color-text-secondary)", fontFamily:"var(--font-mono)", background:"var(--color-background-primary)", padding:"6px 8px", borderRadius:"var(--border-radius-md)", border:"0.5px solid var(--color-border-tertiary)" }}>{data.liste_brute}</p>
+                      <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                        {(data.mots_cles||[]).slice(0,5).map((m,j)=>(
+                          <div key={j} style={{ display:"flex", alignItems:"center", gap:8, fontSize:11 }}>
+                            <span style={{ flex:1, color:"var(--color-text-primary)", fontWeight:500 }}>{m.mot_cle}</span>
+                            <span style={{ padding:"1px 6px", borderRadius:99, background:"var(--color-background-secondary)", color:"var(--color-text-secondary)", fontSize:10 }}>{m.concurrence}</span>
+                            <span style={{ padding:"1px 6px", borderRadius:99, background:"var(--color-background-secondary)", color:"var(--color-text-secondary)", fontSize:10 }}>{m.funnel}</span>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  )}
-
-                  {step.id === "faq" && (
-                    <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                      {(data.faq_items||data.paa_questions||[]).slice(0,4).map((item,j) => (
-                        <div key={j}>
-                          <p style={{ margin:0, fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>Q : {item.question}</p>
-                          <p style={{ margin:"2px 0 0", fontSize:11, color:"var(--color-text-secondary)" }}>{(item.answer||item.short_answer||"").slice(0,130)}…</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {step.id === "plan" && (
-                    <div>
-                      <p style={{ margin:"0 0 4px", fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>{data.h1}</p>
-                      <p style={{ margin:"0 0 8px", fontSize:11, color:"var(--color-text-secondary)" }}>{data.meta_description}</p>
-                      {(data.sections||[]).map((sec,j) => (
-                        <div key={j} style={{ marginBottom:4 }}>
-                          <p style={{ margin:0, fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>H2 : {sec.h2}</p>
-                          {(sec.h3s||[]).map((h,k) => <p key={k} style={{ margin:"2px 0 0 14px", fontSize:11, color:"var(--color-text-secondary)" }}>↳ {h}</p>)}
-                        </div>
-                      ))}
-                      <p style={{ margin:"8px 0 0", fontSize:11, color:"var(--color-text-tertiary)" }}>≈ {data.total_estimated_words} mots</p>
                     </div>
                   )}
 
                   {step.id === "article" && (
                     <div>
+                      <p style={{ margin:"0 0 4px", fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>Title : {data.meta_title}</p>
+                      <p style={{ margin:"0 0 8px", fontSize:11, color:"var(--color-text-secondary)" }}>Meta : {data.meta_description}</p>
                       <div style={{ display:"flex", gap:8, marginBottom:10, flexWrap:"wrap" }}>
                         {[{l:"Mots",v:data.word_count},{l:"Lecture",v:`${data.reading_time_minutes} min`},{l:"Score SEO",v:`${data.seo_score_estimate}/100`}].map(m=>(
                           <div key={m.l} style={{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-md)", padding:"5px 14px", textAlign:"center" }}>
@@ -434,12 +506,19 @@ export default function App() {
                           </div>
                         ))}
                       </div>
-                      <p style={{ fontSize:12, color:"var(--color-text-secondary)", margin:"0 0 6px" }}><strong>Extrait :</strong> {data.excerpt}</p>
+                      {(data.ancres_maillage||[]).length > 0 && (
+                        <div style={{ marginBottom:8 }}>
+                          <p style={{ margin:"0 0 4px", fontSize:11, fontWeight:500, color:"var(--color-text-primary)" }}>Maillage interne suggéré :</p>
+                          {data.ancres_maillage.map((a,j)=><p key={j} style={{ margin:"2px 0 0", fontSize:11, color:"var(--color-text-secondary)" }}>→ "{a.ancre}" → {a.sujet_cible}</p>)}
+                        </div>
+                      )}
                       <div style={{ fontSize:11, background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-md)", padding:"8px", maxHeight:100, overflow:"auto", fontFamily:"var(--font-mono)", color:"var(--color-text-tertiary)", wordBreak:"break-all" }}>
                         {(data.html_content||"").slice(0,500)}…
                       </div>
                     </div>
                   )}
+
+
 
                 </div>
               )}
@@ -448,7 +527,7 @@ export default function App() {
         })}
       </div>
 
-      {isDone && (
+      {(stepStatus["article"] === "done") && (
         <div style={{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)", padding:"1rem 1.25rem", animation:"fadeIn 0.3s ease" }}>
           <p style={{ margin:"0 0 10px", fontSize:14, fontWeight:500, color:"var(--color-text-primary)" }}>Publication WordPress</p>
 
@@ -459,43 +538,36 @@ export default function App() {
                 <p style={{ margin:0, fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>{activeSite.name}</p>
                 <p style={{ margin:0, fontSize:11, color:"var(--color-text-secondary)" }}>{activeSite.wpUrl} · {activeSite.wpUser}</p>
               </div>
-              <button onClick={() => setShowModal(true)} style={{ fontSize:11, padding:"3px 10px" }}>Changer</button>
+              <button onClick={()=>setShowModal(true)} style={{ fontSize:11, padding:"3px 10px" }}>Changer</button>
             </div>
           ) : (
             <div style={{ padding:"8px 12px", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-md)", marginBottom:10 }}>
-              <p style={{ margin:0, fontSize:12, color:"var(--color-text-secondary)" }}>
-                Aucun site sélectionné —{" "}
-                <button onClick={() => setShowModal(true)} style={{ background:"none", border:"none", color:"var(--color-text-info)", cursor:"pointer", padding:0, fontSize:12 }}>ajouter un site</button>
-              </p>
+              <p style={{ margin:0, fontSize:12, color:"var(--color-text-secondary)" }}>Aucun site — <button onClick={()=>setShowModal(true)} style={{ background:"none", border:"none", color:"var(--color-text-info)", cursor:"pointer", padding:0, fontSize:12 }}>ajouter</button></p>
             </div>
           )}
 
           <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-            <button onClick={handlePublish} disabled={!activeSite||wpStatus==="publishing"} style={{ padding:"7px 18px", fontWeight:500, opacity:(!activeSite||wpStatus==="publishing")?0.45:1, cursor:(!activeSite||wpStatus==="publishing")?"not-allowed":"pointer" }}>
+            <button onClick={handlePublish} disabled={!activeSite||wpStatus==="publishing"} style={{ padding:"7px 18px", fontWeight:500, opacity:(!activeSite||wpStatus==="publishing")?0.45:1 }}>
               {wpStatus==="publishing" ? "Publication…" : "📤 Publier en brouillon"}
             </button>
-            <button onClick={() => {
+            <button onClick={()=>{
               const html = results["article"]?.html_content || "";
-              const blob = new Blob([html], {type:"text/html"});
+              const blob = new Blob([html],{type:"text/html"});
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a");
               a.href=url; a.download=`article-${keyword.replace(/\s+/g,"-")}.html`; a.click();
-            }} style={{ fontSize:12, padding:"7px 14px" }}>
-              ⬇ Télécharger HTML
-            </button>
+            }} style={{ fontSize:12, padding:"7px 14px" }}>⬇ Télécharger HTML</button>
           </div>
 
-          {wpStatus === "published" && wpResult && (
+          {wpStatus==="published" && wpResult && (
             <div style={{ marginTop:10, background:"#D1FAE5", border:"0.5px solid #A7F3D0", borderRadius:"var(--border-radius-md)", padding:"10px 14px", animation:"fadeIn 0.3s ease" }}>
               <p style={{ margin:0, fontSize:13, fontWeight:500, color:"#065F46" }}>✓ Brouillon publié sur {activeSite?.name} !</p>
               <p style={{ margin:"3px 0 0", fontSize:12, color:"#065F46" }}>Article #{wpResult.id} — <a href={wpResult.link} target="_blank" rel="noopener" style={{ color:"#047857" }}>Voir dans WordPress ↗</a></p>
             </div>
           )}
-          {(wpStatus === "error_wp" || wpStatus === "no_site") && (
+          {(wpStatus==="error_wp"||wpStatus==="no_site") && (
             <div style={{ marginTop:10, background:"#FEE2E2", border:"0.5px solid #FECACA", borderRadius:"var(--border-radius-md)", padding:"10px 14px" }}>
-              <p style={{ margin:0, fontSize:13, color:"#991B1B" }}>
-                {wpStatus === "no_site" ? "Sélectionne un site WordPress d'abord." : `Erreur WP : ${wpResult?.error}`}
-              </p>
+              <p style={{ margin:0, fontSize:13, color:"#991B1B" }}>{wpStatus==="no_site"?"Sélectionne un site d'abord.":`Erreur WP : ${wpResult?.error}`}</p>
             </div>
           )}
         </div>
