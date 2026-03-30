@@ -628,7 +628,11 @@ export default function App(){
 
   async function runPipelineFor(subj,kw,wc,site,atype,lsc,autoPublish=false){
     abortRef.current=false;setRunning(true);setResults({});setStepStatus({});setWpStatus(null);setWpResult(null);setImageStatus(null);setImagePreview(null);
-    const acc={};const siteName=site?.name||"mon site";const profile=site?.editorial||DEFAULT_PROFILE;
+    const acc={};const siteName=site?.name||"mon site";
+    // Always read fresh site data from localStorage to get latest geminiKey and settings
+    const freshSites=loadLS(SITES_KEY,[]);
+    const freshSite=freshSites.find(s=>s.name===site?.name)||site;
+    const profile=freshSite?.editorial||DEFAULT_PROFILE;
     const cfgs=[
       {id:"intention",  tokens:2000,build:()=>PROMPTS.intention(subj,kw,siteName,wc,instructions.intention||"")},
       {id:"competitors",tokens:3000,build:()=>PROMPTS.competitors(subj,kw,siteName,wc,instructions.competitors||"")},
@@ -669,25 +673,31 @@ export default function App(){
       }
 
       // Auto-publish
-      if(autoPublish&&acc.article&&!acc.article.error&&site){
+      if(autoPublish&&acc.article&&!acc.article.error&&freshSite){
         setWpStatus("publishing");
         try{
           let featuredMediaId=null;
           if(acc.imageBase64){
             try{
               const filename=buildImageFilename(subj);
-              const media=await uploadImageToWordPress(site,acc.imageBase64,acc.imageMimeType||"image/jpeg",filename);
+              const media=await uploadImageToWordPress(freshSite,acc.imageBase64,acc.imageMimeType||"image/jpeg",filename);
               featuredMediaId=media.id;
             }catch(e){console.warn("Image upload failed:",e.message);}
           }
-          const r=await publishToWordPress(site,acc.article,featuredMediaId);
+          const r=await publishToWordPress(freshSite,acc.article,featuredMediaId);
           setWpResult(r);setWpStatus("published");
         }catch(e){setWpStatus("error_wp");setWpResult({error:e.message});}
       }
     }finally{setRunning(false);}
   }
 
-  const handleRunPipeline=async()=>{if(!isReady)return;setTab("pipeline");await runPipelineFor(subject,keyword,wordCount,activeSite,articleType,linkSaleConfig,true);};
+  const handleRunPipeline=async()=>{
+    if(!isReady)return;
+    const freshSites=loadLS(SITES_KEY,[]);
+    const freshSite=freshSites.find(s=>s.name===activeSite?.name)||activeSite;
+    setTab("pipeline");
+    await runPipelineFor(subject,keyword,wordCount,freshSite,articleType,linkSaleConfig,true);
+  };
 
   async function processExecQueue(){
     if(isProcessingRef.current)return;
@@ -698,10 +708,12 @@ export default function App(){
       while(execQueueRef.current.length>0){
         if(abortRef.current)break;
         const itemId=execQueueRef.current[0];
-        // Get fresh item from queue state
         const item=queue.find(q=>q.id===itemId)||loadLS(QUEUE_KEY,[]).find(q=>q.id===itemId);
         if(!item){execQueueRef.current.shift();continue;}
-        const site=activeSite;if(!site){execQueueRef.current.shift();continue;}
+        // Read fresh site from localStorage — avoids stale React state in async context
+        const freshSites=loadLS(SITES_KEY,[]);
+        const site=freshSites.find(s=>s.name===item.siteId)||freshSites[0];
+        if(!site){execQueueRef.current.shift();continue;}
         setSubject(item.subject);setKeyword(item.keyword);setWordCount(item.wordCount||1500);setArticleType(item.articleType||"article_simple");
         setQueue(prev=>{const u=prev.map(q=>q.id===itemId?{...q,status:"running"}:q);saveLS(QUEUE_KEY,u);return u;});
         await runPipelineFor(item.subject,item.keyword,item.wordCount||1500,site,item.articleType||"article_simple",{},true);
