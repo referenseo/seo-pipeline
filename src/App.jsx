@@ -69,7 +69,7 @@ async function publishToWordPress(profile, articleData) {
   const cleanUrl = profile.wpUrl.replace(/\/$/, "");
   const res = await fetch(`${cleanUrl}/wp-json/wp/v2/posts`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "an, "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "an, Authorization: `Basic ${credentials}` },
+    headers: { "Content-Type": "application/json", Authorization: `Basic ${credentials}` },
     body: JSON.stringify({
       title: articleData.title,
       content: articleData.html_content,
