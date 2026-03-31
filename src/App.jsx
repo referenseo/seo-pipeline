@@ -348,16 +348,23 @@ function buildImageFilename(subject){
 
 async function uploadImageToWordPress(profile,imageBase64,mimeType,filename){
   const creds=btoa(`${profile.wpUser}:${profile.appPassword}`);
-  const url=profile.wpUrl.replace(/\/$/,"");
   const byteString=atob(imageBase64);
   const ab=new ArrayBuffer(byteString.length);
   const ia=new Uint8Array(ab);
   for(let i=0;i<byteString.length;i++)ia[i]=byteString.charCodeAt(i);
   const blob=new Blob([ab],{type:mimeType});
-  const formData=new FormData();
-  formData.append("file",blob,filename);
-  const res=await fetch(`${url}/wp-json/wp/v2/media`,{method:"POST",headers:{Authorization:`Basic ${creds}`},body:formData});
-  if(!res.ok){const e=await res.json();throw new Error(e.message||`WP Media HTTP ${res.status}`);}
+  // Use Vercel proxy to bypass CORS on WP media endpoint
+  const res=await fetch("/api/upload-media",{
+    method:"POST",
+    headers:{
+      Authorization:`Basic ${creds}`,
+      "Content-Type":mimeType,
+      "x-wp-url":profile.wpUrl.replace(/\/$/,""),
+      "x-filename":filename,
+    },
+    body:blob,
+  });
+  if(!res.ok){const e=await res.json();throw new Error(e.error||`Upload HTTP ${res.status}`);}
   return await res.json();
 }
 
