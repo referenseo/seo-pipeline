@@ -15,10 +15,13 @@ export default async function handler(req, res) {
     const formData = new FormData();
     const blob = new Blob([imageBuffer], { type: mimeType });
     formData.append("file", blob, filename);
-    const wpRes = await fetch(mediaUrl, { method: "POST", headers: { Authorization: authorization }, body: formData });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    const wpRes = await fetch(mediaUrl, { method: "POST", headers: { Authorization: authorization }, body: formData, signal: controller.signal });
+    clearTimeout(timeout);
     const text = await wpRes.text();
     let data;
-    try { data = JSON.parse(text); } catch { return res.status(wpRes.status||500).json({ error: `WP a répondu en HTML (${wpRes.status}): ${text.slice(0,300)}` }); }
+    try { data = JSON.parse(text); } catch { return res.status(wpRes.status||500).json({ error: `WP HTML (${wpRes.status}): ${text.slice(0,200)}` }); }
     if (!wpRes.ok) return res.status(wpRes.status).json({ error: data.message || JSON.stringify(data) });
     return res.status(200).json(data);
   } catch(e) { return res.status(500).json({ error: e.message }); }
