@@ -7,8 +7,8 @@ export default async function handler(req, res) {
   const imageBuffer = Buffer.concat(chunks);
   const wpUrl = req.headers["x-wp-url"];
   const authorization = req.headers["authorization"];
-  const mimeType = req.headers["content-type"] || "image/png";
-  const filename = req.headers["x-filename"] || "image.png";
+  const mimeType = req.headers["content-type"] || "image/jpeg";
+  const filename = req.headers["x-filename"] || "image.jpg";
   if (!wpUrl || !authorization) return res.status(400).json({ error: "Missing headers" });
   try {
     const mediaUrl = `${wpUrl.replace(/\/$/, "")}/wp-json/wp/v2/media`;
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     const blob = new Blob([imageBuffer], { type: mimeType });
     formData.append("file", blob, filename);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
+    const timeout = setTimeout(() => controller.abort(), 55000);
     const wpRes = await fetch(mediaUrl, { method: "POST", headers: { Authorization: authorization }, body: formData, signal: controller.signal });
     clearTimeout(timeout);
     const text = await wpRes.text();

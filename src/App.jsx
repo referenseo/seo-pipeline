@@ -346,21 +346,46 @@ function buildImageFilename(subject){
   return(words.length>0?words.join("-"):"article")+".jpg";
 }
 
+async function compressImageToJpeg(base64,mimeType,maxWidth=1280,quality=0.82){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement("canvas");
+      let w=img.width,h=img.height;
+      if(w>maxWidth){h=Math.round(h*maxWidth/w);w=maxWidth;}
+      canvas.width=w;canvas.height=h;
+      const ctx=canvas.getContext("2d");
+      ctx.drawImage(img,0,0,w,h);
+      const dataUrl=canvas.toDataURL("image/jpeg",quality);
+      const b64=dataUrl.split(",")[1];
+      resolve(b64);
+    };
+    img.onerror=reject;
+    img.src=`data:${mimeType};base64,${base64}`;
+  });
+}
+
 async function uploadImageToWordPress(profile,imageBase64,mimeType,filename){
   const creds=btoa(`${profile.wpUser}:${profile.appPassword}`);
-  const byteString=atob(imageBase64);
+  // Compress to JPEG before upload to reduce size (<200KB)
+  let finalBase64=imageBase64,finalMime=mimeType,finalFilename=filename;
+  try{
+    finalBase64=await compressImageToJpeg(imageBase64,mimeType);
+    finalMime="image/jpeg";
+    finalFilename=filename.replace(/\.[^.]+$/,".jpg");
+  }catch(e){console.warn("Compression failed, using original:",e.message);}
+  const byteString=atob(finalBase64);
   const ab=new ArrayBuffer(byteString.length);
   const ia=new Uint8Array(ab);
   for(let i=0;i<byteString.length;i++)ia[i]=byteString.charCodeAt(i);
-  const blob=new Blob([ab],{type:mimeType});
-  // Use Vercel proxy to bypass CORS on WP media endpoint
+  const blob=new Blob([ab],{type:finalMime});
   const res=await fetch("/api/upload-media",{
     method:"POST",
     headers:{
       Authorization:`Basic ${creds}`,
-      "Content-Type":mimeType,
+      "Content-Type":finalMime,
       "x-wp-url":profile.wpUrl.replace(/\/$/,""),
-      "x-filename":filename,
+      "x-filename":finalFilename,
     },
     body:blob,
   });
@@ -689,23 +714,28 @@ export default function App(){
         }
       }
 
-      // Auto-publish
+      // Auto-publish: publish article first, then attach image separately
       if(autoPublish&&acc.article&&!acc.article.error&&freshSite){
         setWpStatus("publishing");
         try{
-          let featuredMediaId=null;
-          if(acc.imageBase64){
+          // Step 1: publish article without image first (fast)
+          const r=await publishToWordPress(freshSite,acc.article,null);
+          setWpResult(r);setWpStatus("published");
+
+          // Step 2: upload image and attach as featured (separate, non-blocking)
+          if(acc.imageBase64&&r.id){
             try{
               const filename=buildImageFilename(subj);
               const media=await uploadImageToWordPress(freshSite,acc.imageBase64,acc.imageMimeType||"image/png",filename);
-              featuredMediaId=media.id;
+              // Attach featured image via PATCH
+              const creds=btoa(`${freshSite.wpUser}:${freshSite.appPassword}`);
+              const patchUrl=`${freshSite.wpUrl.replace(/\/$/,"")}/wp-json/wp/v2/posts/${r.id}`;
+              await fetch(patchUrl,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Basic ${creds}`},body:JSON.stringify({featured_media:media.id})});
+              setWpResult(prev=>({...prev,featuredMediaId:media.id}));
             }catch(e){
-              console.warn("Image upload failed:",e.message);
               setResults(prev=>({...prev,image:{...prev.image,uploadError:e.message}}));
             }
           }
-          const r=await publishToWordPress(freshSite,acc.article,featuredMediaId);
-          setWpResult({...r,featuredMediaId});setWpStatus("published");
         }catch(e){setWpStatus("error_wp");setWpResult({error:e.message});}
       }
     }finally{setRunning(false);}
