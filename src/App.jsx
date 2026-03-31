@@ -163,7 +163,8 @@ const SYSTEM_BASE=(s)=>`Tu es un expert SEO et rédacteur web francophone spéci
 
 // ─── ARTICLE PROMPT BUILDER ───────────────────────────────────────────────────
 function buildArticlePrompt(s,k,site,wc,instructions,prevData,profile,articleType,linkSaleConfig){
-  const cta=profile?.cta||CTA_DEFAULT,ton=profile?.ton||TON_DEFAULT,sig=profile?.signature||"";
+  const cta=profile?.cta||"",ton=profile?.ton||TON_DEFAULT,sig=profile?.signature||"";
+  const ctaInstr=cta?`CTA: ${cta}`:"Pas de CTA spécifique — conclure par une invitation naturelle à agir, sans mentionner de newsletter ou produit particulier.";
   const useYear=profile?.useYearVars!==false,scIntro=profile?.shortcodeIntro||"",scEnd=profile?.shortcodeConclusion||"";
   const snippetBg=profile?.snippetEnabled?(profile?.snippetBg||"#fdeecd"):null;
   const isLM=site.toLowerCase().includes("lesmakers");
@@ -177,9 +178,9 @@ function buildArticlePrompt(s,k,site,wc,instructions,prevData,profile,articleTyp
   const snippetInstr=snippetBg
     ?`BLOC SNIPPET — utiliser EXACTEMENT ce bloc (ne rien changer à la structure):
 <!-- wp:paragraph {"backgroundColor":"","style":{"elements":{"link":{"color":{"text":"var:preset|color|contrast"}}}}} -->
-<p class="has-background" style="background-color:${snippetBg};padding:1em 1.2em;border-radius:6px">📌 <strong>Résumé :</strong> [réponse directe 40-60 mots, mot-clé dans les 10 premiers mots]</p>
+<p class="has-background" style="background-color:${snippetBg};padding:1em 1.2em;border-radius:6px"><strong>[réponse directe 40-60 mots en gras, mot-clé dans les 10 premiers mots, pas de label "Résumé"]</strong></p>
 <!-- /wp:paragraph -->`
-    :`BLOC SNIPPET: <!-- wp:paragraph --><p>📌 <strong>Résumé :</strong> [réponse directe 40-60 mots]</p><!-- /wp:paragraph -->`;
+    :`BLOC SNIPPET: <!-- wp:paragraph --><p><strong>[réponse directe 40-60 mots en gras, pas de label "Résumé"]</strong></p><!-- /wp:paragraph -->`;
   const linkSaleInstr=articleType==="vente_liens"&&linkSaleConfig?`
 CONTRAINTES VENTE DE LIENS (PRIORITAIRES):
 - URL cible: ${linkSaleConfig.url||"non spécifiée"}
@@ -204,7 +205,7 @@ CONTEXTE SEO:
 - Angle: ${prevData?.longtail?.angle_editorial||"guide pratique"}
 - Audience: ${AUDIENCE}
 - Ton: ${ton}
-- CTA: ${cta}
+- ${ctaInstr}
 - Requêtes: ${(prevData?.competitors?.requetes_conversationnelles||[]).slice(0,8).join(" / ")}
 - Consignes: ${instructions}
 ${linkSaleInstr}
@@ -312,10 +313,9 @@ async function generateImageGemini(subject,geminiKey,paletteColor,isReferenseo=f
     ?`Create a professional blog featured image for an article about: "${subject}".
 Style: high-quality royalty-free style photograph or realistic illustration. NOT flat design.
 The image should feel like a professional stock photo: sharp, modern, well-lit, editorial feel.
-Background: solid ${colorDesc} color zone on one side or bottom third of the image, where a title could appear.
-Subject: a person working, a laptop, a desk scene, a business concept — something relevant to the article topic.
-NO text, NO letters, NO logo, NO watermark.
-Aspect ratio: 16:9 horizontal landscape.`
+Subject: something visually relevant to the article topic — a person working, a laptop, a concept scene, a business environment.
+NO text, NO letters, NO numbers, NO logo, NO watermark.
+Aspect ratio: 16:9 horizontal landscape. Professional and clean.`
     :`Create a minimalist flat illustration for a blog article about: "${subject}".
 MANDATORY background color: ${colorDesc}. The ENTIRE background must be filled with this exact color. No other background color is allowed.
 Main subject: centered, simple, flat style, occupying about 65% of the image.
@@ -366,10 +366,8 @@ async function processImageWithBackground(base64,mimeType,bgColor,maxWidth=1280,
       if(w>maxWidth){h=Math.round(h*maxWidth/w);w=maxWidth;}
       canvas.width=w;canvas.height=h;
       const ctx=canvas.getContext("2d");
-      // Paint exact background color first
-      ctx.fillStyle=bgColor;
-      ctx.fillRect(0,0,w,h);
-      // Draw image on top
+      // Paint background color only if specified
+      if(bgColor){ctx.fillStyle=bgColor;ctx.fillRect(0,0,w,h);}
       ctx.drawImage(img,0,0,w,h);
       const dataUrl=canvas.toDataURL("image/jpeg",quality);
       resolve(dataUrl.split(",")[1]);
@@ -390,9 +388,8 @@ function buildSlug(subject){
   return words.length>0?words.join("-"):"article";
 }
 
-async function uploadImageToWordPress(profile,imageBase64,mimeType,filename,bgColor="#ffffff"){
+async function uploadImageToWordPress(profile,imageBase64,mimeType,filename,bgColor=null){
   const creds=btoa(`${profile.wpUser}:${profile.appPassword}`);
-  // Compress + apply exact background color via Canvas
   let finalBase64=imageBase64,finalFilename=filename.replace(/\.[^.]+$/,".jpg");
   try{
     finalBase64=await processImageWithBackground(imageBase64,mimeType,bgColor);
@@ -753,7 +750,9 @@ export default function App(){
           if(acc.imageBase64&&r.id){
             try{
               const filename=buildImageFilename(subj);
-              const media=await uploadImageToWordPress(freshSite,acc.imageBase64,acc.imageMimeType||"image/png",filename,acc.imagePaletteColor||"#abcee3");
+              const isRef=freshSite?.name?.toLowerCase().includes("referenseo")||freshSite?.wpUrl?.toLowerCase().includes("referenseo");
+              const bgColor=isRef?null:(acc.imagePaletteColor||"#abcee3");
+              const media=await uploadImageToWordPress(freshSite,acc.imageBase64,acc.imageMimeType||"image/png",filename,bgColor);
               const creds=btoa(`${freshSite.wpUser}:${freshSite.appPassword}`);
               const patchUrl=`${freshSite.wpUrl.replace(/\/$/,"")}/wp-json/wp/v2/posts/${r.id}`;
               await fetch(patchUrl,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Basic ${creds}`},body:JSON.stringify({featured_media:media.id})});
