@@ -346,7 +346,7 @@ function buildImageFilename(subject){
   return(words.length>0?words.join("-"):"article")+".jpg";
 }
 
-async function compressImageToJpeg(base64,mimeType,maxWidth=1280,quality=0.82){
+async function processImageWithBackground(base64,mimeType,bgColor,maxWidth=1280,quality=0.85){
   return new Promise((resolve,reject)=>{
     const img=new Image();
     img.onload=()=>{
@@ -355,35 +355,47 @@ async function compressImageToJpeg(base64,mimeType,maxWidth=1280,quality=0.82){
       if(w>maxWidth){h=Math.round(h*maxWidth/w);w=maxWidth;}
       canvas.width=w;canvas.height=h;
       const ctx=canvas.getContext("2d");
+      // Paint exact background color first
+      ctx.fillStyle=bgColor;
+      ctx.fillRect(0,0,w,h);
+      // Draw image on top
       ctx.drawImage(img,0,0,w,h);
       const dataUrl=canvas.toDataURL("image/jpeg",quality);
-      const b64=dataUrl.split(",")[1];
-      resolve(b64);
+      resolve(dataUrl.split(",")[1]);
     };
     img.onerror=reject;
     img.src=`data:${mimeType};base64,${base64}`;
   });
 }
 
-async function uploadImageToWordPress(profile,imageBase64,mimeType,filename){
+function buildSlug(subject){
+  const stopwords=new Set(["comment","pour","les","des","une","avec","dans","sur","par","que","qui","quoi","est","son","ses","tout","plus","bien","mais","sans","pas","comme","aux","ces","cet","cette","nous","vous","leur","leurs","mon","ton","le","la","de","du","en","et","ou","un","au","ce","se","si","ni","ne"]);
+  const words=subject.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z\s]/g,"")
+    .split(/\s+/)
+    .filter(w=>w.length>2&&!stopwords.has(w))
+    .slice(0,2);
+  return words.length>0?words.join("-"):"article";
+}
+
+async function uploadImageToWordPress(profile,imageBase64,mimeType,filename,bgColor="#ffffff"){
   const creds=btoa(`${profile.wpUser}:${profile.appPassword}`);
-  // Compress to JPEG before upload to reduce size (<200KB)
-  let finalBase64=imageBase64,finalMime=mimeType,finalFilename=filename;
+  // Compress + apply exact background color via Canvas
+  let finalBase64=imageBase64,finalFilename=filename.replace(/\.[^.]+$/,".jpg");
   try{
-    finalBase64=await compressImageToJpeg(imageBase64,mimeType);
-    finalMime="image/jpeg";
-    finalFilename=filename.replace(/\.[^.]+$/,".jpg");
-  }catch(e){console.warn("Compression failed, using original:",e.message);}
+    finalBase64=await processImageWithBackground(imageBase64,mimeType,bgColor);
+  }catch(e){console.warn("Image processing failed, using original:",e.message);}
   const byteString=atob(finalBase64);
   const ab=new ArrayBuffer(byteString.length);
   const ia=new Uint8Array(ab);
   for(let i=0;i<byteString.length;i++)ia[i]=byteString.charCodeAt(i);
-  const blob=new Blob([ab],{type:finalMime});
+  const blob=new Blob([ab],{type:"image/jpeg"});
   const res=await fetch("/api/upload-media",{
     method:"POST",
     headers:{
       Authorization:`Basic ${creds}`,
-      "Content-Type":finalMime,
+      "Content-Type":"image/jpeg",
       "x-wp-url":profile.wpUrl.replace(/\/$/,""),
       "x-filename":finalFilename,
     },
@@ -393,7 +405,7 @@ async function uploadImageToWordPress(profile,imageBase64,mimeType,filename){
   return await res.json();
 }
 
-async function publishToWordPress(profile,articleData,featuredMediaId){
+async function publishToWordPress(profile,articleData,featuredMediaId,slug){
   const creds=btoa(`${profile.wpUser}:${profile.appPassword}`);
   const url=profile.wpUrl.replace(/\/$/,"");
   const useYear=profile?.editorial?.useYearVars!==false;
@@ -402,6 +414,7 @@ async function publishToWordPress(profile,articleData,featuredMediaId){
     :articleData.meta_title;
   const body={title:articleData.wp_title||articleData.meta_title,content:articleData.html_content,excerpt:articleData.excerpt,status:"draft",meta:{_seopress_titles_title:seoTitle,_seopress_titles_desc:articleData.meta_description||""}};
   if(featuredMediaId)body.featured_media=featuredMediaId;
+  if(slug)body.slug=slug;
   const res=await fetch(`${url}/wp-json/wp/v2/posts`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Basic ${creds}`},body:JSON.stringify(body)});
   if(!res.ok){const e=await res.json();throw new Error(e.message||`HTTP ${res.status}`);}
   return await res.json();
@@ -718,16 +731,15 @@ export default function App(){
       if(autoPublish&&acc.article&&!acc.article.error&&freshSite){
         setWpStatus("publishing");
         try{
+          const slug=buildSlug(subj);
           // Step 1: publish article without image first (fast)
-          const r=await publishToWordPress(freshSite,acc.article,null);
+          const r=await publishToWordPress(freshSite,acc.article,null,slug);
           setWpResult(r);setWpStatus("published");
-
-          // Step 2: upload image and attach as featured (separate, non-blocking)
+          // Step 2: upload image with exact bg color and attach as featured
           if(acc.imageBase64&&r.id){
             try{
               const filename=buildImageFilename(subj);
-              const media=await uploadImageToWordPress(freshSite,acc.imageBase64,acc.imageMimeType||"image/png",filename);
-              // Attach featured image via PATCH
+              const media=await uploadImageToWordPress(freshSite,acc.imageBase64,acc.imageMimeType||"image/png",filename,acc.imagePaletteColor||"#abcee3");
               const creds=btoa(`${freshSite.wpUser}:${freshSite.appPassword}`);
               const patchUrl=`${freshSite.wpUrl.replace(/\/$/,"")}/wp-json/wp/v2/posts/${r.id}`;
               await fetch(patchUrl,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Basic ${creds}`},body:JSON.stringify({featured_media:media.id})});
