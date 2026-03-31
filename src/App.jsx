@@ -223,12 +223,15 @@ ORDRE OBLIGATOIRE DU CONTENU (respecter strictement cette séquence):
 [2] INTRO (80 mots max): ${isLM?"hook vérité ligne 1 (jamais 'Dans cet article')":"accroche directe"}, contexte + mot-clé naturel. Dernière ligne de l'intro: <!-- wp:shortcode -->${scIntro}<!-- /wp:shortcode -->
 ⚠️ Le bloc [1] SNIPPET doit impérativement apparaître AVANT le bloc [2] INTRO dans html_content. JAMAIS après.
 [3] CORPS: ${isLM?"H2 humains avec verbe, punchline/section, 2-4 moments signature, 1 stat concrète.":"H2 naturels, exemples concrets."} Paragraphes 3-4 lignes. Transitions fluides. ${yearNote}
-[4] FAQ: 3 questions PAA, réponses 50-150 mots. ${useYear?"Si l'année est mentionnée dans une FAQ: [current_date format=Y]":""}
+LISTES AVANTAGES/INCONVÉNIENTS: quand une section présente des avantages ou inconvénients, utiliser obligatoirement ce format Gutenberg:
+Avantages → chaque item commence par ✅ (ex: <!-- wp:list-item --><li>✅ Blabla</li><!-- /wp:list-item -->)
+Inconvénients → chaque item commence par ❌ (ex: <!-- wp:list-item --><li>❌ Blabla</li><!-- /wp:list-item -->)
+[4] FAQ: 3 questions PAA, réponses 50-150 mots. ${useYear?"Année dans FAQ: [current_date format=Y]":""}
 [5] CONCLUSION+CTA: ${isLM?"bénéfice concret AVANT l'action.":"CTA clair."} Fin: <!-- wp:shortcode -->${scEnd}<!-- /wp:shortcode -->
-RAPPEL ANNÉE: ${useYear?"Vérifier que wp_title contient [current_date format=Y] et que html_content contient le H1 identique avec [current_date format=Y]. Aucune année en chiffres directs dans le contenu.":""}
+RAPPEL ANNÉE: ${useYear?"wp_title avec [current_date format=Y]. PAS de H1 dans html_content. Aucun chiffre d'année dans le contenu, meta_title ou meta_description.":""}
 ANTI-STUFFING: >5 mots mot-clé collé=INTERDIT.
 SEO: densité 1-1.5%, sémantique 15+, entités nommées, 2-3 ancres maillage, EEAT.
-⚠️ IMPORTANT: Le contenu doit tenir dans une seule réponse JSON. Être concis et percutant plutôt que long et répétitif. Pas de remplissage. Chaque paragraphe doit apporter de la valeur.
+⚠️ IMPORTANT: Le contenu doit tenir dans une seule réponse JSON. Être concis et percutant plutôt que long et répétitif. Pas de remplissage.
 
 PHASE 3 — AUTO-CORRECTION: phrases SEO artificielles? générique IA? H2 actionnable? hook tension? ${isLM?"moments signature (min 2)?":""} CTA orienté résultat?
 
@@ -294,14 +297,20 @@ async function callClaude(prompt,maxTokens=3000){
 
 async function generateImageGemini(subject,geminiKey,paletteColor){
   if(!geminiKey)throw new Error("Clé API Gemini manquante dans le profil éditorial du site");
-  const colorNames={"#abcee3":"light pastel blue","#f3c05d":"warm golden yellow","#dd6b76":"soft rose red","#ed948f":"salmon pink","#ce9aca":"soft lavender purple"};
-  const colorDesc=colorNames[paletteColor.toLowerCase()]||"soft pastel";
-  const prompt=`Create a featured blog image for an article about: "${subject}".
-Style: modern flat editorial illustration, minimalist, clean lines.
-Composition: main subject centered, occupying 60-75% of the image.
-Background: solid uniform ${colorDesc} color, completely plain with no gradient and no texture.
-IMPORTANT: absolutely NO text, NO hex codes, NO labels, NO numbers, NO logo, NO watermark, NO photorealism.
-Format: horizontal 16:9 landscape ratio, sharp and clean.`;
+  const colorNames={
+    "#abcee3":"light sky blue (#abcee3)",
+    "#f3c05d":"golden yellow (#f3c05d)",
+    "#dd6b76":"soft red rose (#dd6b76)",
+    "#ed948f":"salmon pink (#ed948f)",
+    "#ce9aca":"lavender purple (#ce9aca)"
+  };
+  const colorDesc=colorNames[paletteColor.toLowerCase()]||`pastel (${paletteColor})`;
+  const prompt=`Create a minimalist flat illustration for a blog article about: "${subject}".
+
+MANDATORY background color: ${colorDesc}. The ENTIRE background must be filled with this exact color. No other background color is allowed.
+Main subject: centered, simple, flat style, occupying about 65% of the image.
+NO text, NO letters, NO numbers, NO hex codes, NO logo, NO watermark, NO gradient, NO texture, NO photorealism.
+Aspect ratio: 16:9 horizontal landscape. Clean and sharp.`;
   const res=await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${geminiKey}`,
     {method:"POST",headers:{"Content-Type":"application/json"},
@@ -629,10 +638,11 @@ export default function App(){
   async function runPipelineFor(subj,kw,wc,site,atype,lsc,autoPublish=false){
     abortRef.current=false;setRunning(true);setResults({});setStepStatus({});setWpStatus(null);setWpResult(null);setImageStatus(null);setImagePreview(null);
     const acc={};const siteName=site?.name||"mon site";
-    // Always read fresh site data from localStorage to get latest geminiKey and settings
+    // Always read fresh site data from localStorage
     const freshSites=loadLS(SITES_KEY,[]);
-    const freshSite=freshSites.find(s=>s.name===site?.name)||site;
+    const freshSite=freshSites.find(s=>s.name===site?.name||s.wpUrl===site?.wpUrl)||freshSites[0]||site;
     const profile=freshSite?.editorial||DEFAULT_PROFILE;
+    console.log("[Pipeline] Site:",freshSite?.name,"| GeminiKey:",profile.geminiKey?"✓ présente":"✗ manquante");
     const cfgs=[
       {id:"intention",  tokens:2000,build:()=>PROMPTS.intention(subj,kw,siteName,wc,instructions.intention||"")},
       {id:"competitors",tokens:3000,build:()=>PROMPTS.competitors(subj,kw,siteName,wc,instructions.competitors||"")},
@@ -680,12 +690,15 @@ export default function App(){
           if(acc.imageBase64){
             try{
               const filename=buildImageFilename(subj);
-              const media=await uploadImageToWordPress(freshSite,acc.imageBase64,acc.imageMimeType||"image/jpeg",filename);
+              const media=await uploadImageToWordPress(freshSite,acc.imageBase64,acc.imageMimeType||"image/png",filename);
               featuredMediaId=media.id;
-            }catch(e){console.warn("Image upload failed:",e.message);}
+            }catch(e){
+              console.warn("Image upload failed:",e.message);
+              setResults(prev=>({...prev,image:{...prev.image,uploadError:e.message}}));
+            }
           }
           const r=await publishToWordPress(freshSite,acc.article,featuredMediaId);
-          setWpResult(r);setWpStatus("published");
+          setWpResult({...r,featuredMediaId});setWpStatus("published");
         }catch(e){setWpStatus("error_wp");setWpResult({error:e.message});}
       }
     }finally{setRunning(false);}
@@ -693,10 +706,8 @@ export default function App(){
 
   const handleRunPipeline=async()=>{
     if(!isReady)return;
-    const freshSites=loadLS(SITES_KEY,[]);
-    const freshSite=freshSites.find(s=>s.name===activeSite?.name)||activeSite;
     setTab("pipeline");
-    await runPipelineFor(subject,keyword,wordCount,freshSite,articleType,linkSaleConfig,true);
+    await runPipelineFor(subject,keyword,wordCount,activeSite,articleType,linkSaleConfig,true);
   };
 
   async function processExecQueue(){
@@ -1036,7 +1047,10 @@ export default function App(){
                   {wpStatus==="published"&&wpResult&&(
                     <div style={{background:C.greenLight,border:`1px solid #A7F3D0`,borderRadius:C.radius,padding:"12px 16px",animation:"rfadeIn 0.3s ease"}}>
                       <p style={{margin:0,fontSize:13,fontWeight:700,color:C.green}}>✓ Brouillon publié sur {activeSite?.name} !</p>
-                      <p style={{margin:"4px 0 0",fontSize:12,color:C.green}}>Article #{wpResult.id} · Image à la une {wpResult.featured_media?"attachée ✓":"non attachée"} · <a href={wpResult.link} target="_blank" rel="noopener" style={{color:C.green,fontWeight:600}}>Voir dans WP ↗</a></p>
+                      <p style={{margin:"4px 0 0",fontSize:12,color:C.green}}>
+                        Article #{wpResult.id} · Image à la une {wpResult.featuredMediaId?"attachée ✓ (#"+wpResult.featuredMediaId+")":"⚠ non attachée"} · <a href={wpResult.link} target="_blank" rel="noopener" style={{color:C.green,fontWeight:600}}>Voir dans WP ↗</a>
+                      </p>
+                      {results.image?.uploadError&&<p style={{margin:"4px 0 0",fontSize:11,color:"#92400E"}}>⚠ Erreur upload image: {results.image.uploadError}</p>}
                     </div>
                   )}
                   {(wpStatus==="error_wp"||wpStatus==="no_site")&&(
