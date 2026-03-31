@@ -16,6 +16,7 @@ const C = {
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const CURRENT_YEAR = 2026;
 const LESMAKERS_SITE = "lesmakers.fr";
+const REFERENSEO_COLOR = "#2daae1";
 const IMAGE_PALETTE = ["#abcee3","#f3c05d","#dd6b76","#ed948f","#ce9aca"];
 
 const ARTICLE_TYPES_LESMAKERS = [
@@ -295,22 +296,32 @@ async function callClaude(prompt,maxTokens=3000){
   catch(e){throw new Error(`JSON invalide: ${e.message} — réessaie ou réduis la longueur`);}
 }
 
-async function generateImageGemini(subject,geminiKey,paletteColor){
+async function generateImageGemini(subject,geminiKey,paletteColor,isReferenseo=false){
   if(!geminiKey)throw new Error("Clé API Gemini manquante dans le profil éditorial du site");
   const colorNames={
     "#abcee3":"light sky blue (#abcee3)",
     "#f3c05d":"golden yellow (#f3c05d)",
     "#dd6b76":"soft red rose (#dd6b76)",
     "#ed948f":"salmon pink (#ed948f)",
-    "#ce9aca":"lavender purple (#ce9aca)"
+    "#ce9aca":"lavender purple (#ce9aca)",
+    "#2daae1":"bright blue (#2daae1)",
   };
-  const colorDesc=colorNames[paletteColor.toLowerCase()]||`pastel (${paletteColor})`;
-  const prompt=`Create a minimalist flat illustration for a blog article about: "${subject}".
+  const colorDesc=colorNames[paletteColor.toLowerCase()]||`${paletteColor}`;
 
+  const prompt=isReferenseo
+    ?`Create a professional blog featured image for an article about: "${subject}".
+Style: high-quality royalty-free style photograph or realistic illustration. NOT flat design.
+The image should feel like a professional stock photo: sharp, modern, well-lit, editorial feel.
+Background: solid ${colorDesc} color zone on one side or bottom third of the image, where a title could appear.
+Subject: a person working, a laptop, a desk scene, a business concept — something relevant to the article topic.
+NO text, NO letters, NO logo, NO watermark.
+Aspect ratio: 16:9 horizontal landscape.`
+    :`Create a minimalist flat illustration for a blog article about: "${subject}".
 MANDATORY background color: ${colorDesc}. The ENTIRE background must be filled with this exact color. No other background color is allowed.
 Main subject: centered, simple, flat style, occupying about 65% of the image.
 NO text, NO letters, NO numbers, NO hex codes, NO logo, NO watermark, NO gradient, NO texture, NO photorealism.
 Aspect ratio: 16:9 horizontal landscape. Clean and sharp.`;
+
   const res=await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${geminiKey}`,
     {method:"POST",headers:{"Content-Type":"application/json"},
@@ -713,9 +724,12 @@ export default function App(){
         if(profile.geminiKey){
           setStatus("image","running");
           try{
-            const paletteColor=IMAGE_PALETTE[paletteIdxRef.current%IMAGE_PALETTE.length];
-            paletteIdxRef.current++;
-            const{base64,mimeType}=await generateImageGemini(subj,profile.geminiKey,paletteColor);
+            const isReferenseo=freshSite?.name?.toLowerCase().includes("referenseo")||freshSite?.wpUrl?.toLowerCase().includes("referenseo");
+            const paletteColor=isReferenseo
+              ?REFERENSEO_COLOR
+              :IMAGE_PALETTE[paletteIdxRef.current%IMAGE_PALETTE.length];
+            if(!isReferenseo)paletteIdxRef.current++;
+            const{base64,mimeType}=await generateImageGemini(subj,profile.geminiKey,paletteColor,isReferenseo);
             setImagePreview(`data:${mimeType};base64,${base64}`);
             acc.imageBase64=base64;acc.imageMimeType=mimeType;acc.imagePaletteColor=paletteColor;
             setResults(prev=>({...prev,image:{base64,mimeType,paletteColor}}));
