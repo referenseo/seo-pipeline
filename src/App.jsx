@@ -64,6 +64,45 @@ RÈGLES: chaque outil avec angle clair, titres différenciants, structure identi
 INTERDIT: lister sans analyser, titres génériques, structures différentes, contenu vague.
 CHECK FINAL: encart avant intro ✓ résumé après intro ✓ structure uniforme ✓ aide réelle au choix ✓`,
 
+  comparatif_referenseo: `TYPE: comparatif ReferenSEO
+OBJECTIF: Comparatif SEO à forte valeur ajoutée. Aider le lecteur à choisir le bon outil avec un avis d'expert personnel. Générer des clics affiliés de manière naturelle.
+INTERDIT ABSOLU: les encarts "📢 Trop occupé pour tout lire" et "🕰️ Pas le temps de tout lire". Jamais. Zéro encart de ce type.
+INTERDIT ABSOLU: toute mention du mot "Maker" ou "Makers".
+INTERDIT: "À qui ça s'adresse", "Ce qu'on a apprécié" (trop générique).
+
+STRUCTURE:
+1. Introduction (pas d'encart avant): accroche directe sur le problème, contexte de la sélection, critères retenus. 3-4 phrases max.
+
+2. Listing des outils (corps principal):
+Chaque outil présenté avec un H3 numéroté: "1. Nom de l'outil — [accroche différenciante en quelques mots]"
+Structure identique pour chaque outil:
+→ Présentation: 2-3 phrases, ce que c'est vraiment, pour quel usage
+→ Fonctionnalités clés: les 3-5 points qui comptent vraiment
+→ Tarifs: prix concrets, tiers si pertinent
+→ Ce que j'aime (lignes simples avec ✅, PAS de liste à puces — utiliser des paragraphes <p>✅ texte</p>)
+→ Ce que j'aime moins (lignes simples avec ❌, PAS de liste à puces — utiliser des paragraphes <p>❌ texte</p>)
+→ Mon verdict: 1 phrase d'avis personnel tranché
+
+3. Section informative H2 #1 — "Comment choisir [catégorie] : les critères qui comptent vraiment"
+Contenu: 2-3 critères décisifs expliqués avec du concret. Ce que la plupart des guides n'expliquent pas. Aide à passer du listing à la décision.
+
+4. Section informative H2 #2 — question pratique liée au sujet (ex: "Faut-il payer pour [catégorie] ou les versions gratuites suffisent ?", "Quel budget prévoir pour [catégorie] en 2026 ?")
+Contenu: réponse directe, chiffrée si possible, avec nuances selon le profil. L'objectif est de lever les derniers freins à l'achat.
+
+5. FAQ: 3 questions PAA concrètes, réponses 50-100 mots, ton d'expert.
+
+6. Conclusion: recommandation finale selon 2-3 profils types (ex: débutant / confirmé / budget serré). Pas d'encart, juste du texte. CTA naturel si pertinent.
+
+RÈGLES:
+- Numéroter chaque outil dans le H3: "1.", "2.", "3."…
+- Chiffres toujours en chiffres (2026, pas "deux mille vingt-six" ; 49€, pas "quarante-neuf euros")
+- ✅/❌ en lignes <p> simples, jamais en <li>
+- Ton d'avis personnel expert, pas de contenu interchangeable
+- Structure identique pour tous les outils
+- Chaque outil doit avoir un angle clair qui le différencie des autres
+
+CHECK FINAL: pas d'encart intro ✓ H3 numérotés ✓ ✅❌ en <p> ✓ 2 H2 informatifs après listing ✓ chiffres en chiffres ✓ avis personnel présent ✓`,
+
   liste: `TYPE: liste / top X
 OBJECTIF: Article top X avec sélection qualitative. Informer, proposer sélection utile, générer clics naturellement.
 STRUCTURE:
@@ -175,7 +214,8 @@ function buildArticlePrompt(s,k,site,wc,instructions,prevData,profile,articleTyp
   const snippetBg=profile?.snippetEnabled?(profile?.snippetBg||"#fdeecd"):null;
   const isLM=site.toLowerCase().includes("lesmakers");
   const isRef=site.toLowerCase().includes("referenseo");
-  const brief=(isLM||isRef)&&articleType?BRIEFS[articleType]||"":"";
+  const briefKey=isRef&&articleType==="comparatif"?"comparatif_referenseo":articleType;
+  const brief=(isLM||isRef)&&briefKey?BRIEFS[briefKey]||"":"";
   const yearNote=useYear
     ?"⚠️ RÈGLE ANNÉE: remplacer TOUTE occurrence de l'année (2026, 2025, etc.) par le shortcode [current_date format=Y] — dans le corps, les H2, les H3, partout. Ne jamais écrire un chiffre d'année directement."
     :"Écrire l'année en toutes lettres si nécessaire.";
@@ -223,11 +263,13 @@ ${isRef?`\n════ VOIX ÉDITORIALE REFERENSEO — NON NÉGOCIABLE ══�
 Cet article doit sonner comme l'avis personnel d'un expert SEO francophone, pas comme un contenu généré.
 RÈGLES ABSOLUES:
 - Phrases 100% françaises naturelles. INTERDIT: "en termes de", "au niveau de", "dans le cadre de", "il est important de noter", "n'hésitez pas à", "cela étant dit", "en ce sens", "force est de constater", "il convient de"
-- Ton d'avis personnel : "j'ai testé", "selon mon expérience", "ce que j'apprécie", "ce qui m'a surpris", "à mon sens"
+- Ton à la première personne du singulier: "j'ai testé", "selon mon expérience", "ce que j'apprécie", "ce qui m'a surpris", "à mon sens", "j'ai remarqué", "mon avis"
+- INTERDIT: "nous", "notre", "on" au sens collectif — toujours "je", "mon", "ma", "mes"
 - Concret et précis : chiffres réels, exemples vécus, cas d'usage spécifiques
 - Jamais de contenu interchangeable qu'on pourrait retrouver mot pour mot ailleurs
 - Chaque H2 doit apporter une vraie information, pas une reformulation du titre
 - Zéro jargon marketing anglicisé, zéro phrase creuse
+- INTERDIT: tout usage du mot "Maker" ou "Makers"
 ════`:""}
 
 PHASE 1 — PRÉPARATION:
@@ -242,9 +284,11 @@ ORDRE OBLIGATOIRE DU CONTENU (respecter strictement cette séquence):
 [2] INTRO (80 mots max): ${isLM?"hook vérité ligne 1 (jamais 'Dans cet article')":"accroche directe"}, contexte + mot-clé naturel. Dernière ligne de l'intro: <!-- wp:shortcode -->${scIntro}<!-- /wp:shortcode -->
 ⚠️ Le bloc [1] SNIPPET doit impérativement apparaître AVANT le bloc [2] INTRO dans html_content. JAMAIS après.
 [3] CORPS: ${isLM?"H2 humains avec verbe, punchline/section, 2-4 moments signature, 1 stat concrète.":"H2 naturels, exemples concrets."} Paragraphes 3-4 lignes. Transitions fluides. ${yearNote}
-LISTES AVANTAGES/INCONVÉNIENTS: quand une section présente des avantages ou inconvénients, utiliser obligatoirement ce format Gutenberg:
-Avantages → chaque item commence par ✅ (ex: <!-- wp:list-item --><li>✅ Blabla</li><!-- /wp:list-item -->)
-Inconvénients → chaque item commence par ❌ (ex: <!-- wp:list-item --><li>❌ Blabla</li><!-- /wp:list-item -->)
+LISTES AVANTAGES/INCONVÉNIENTS: quand une section présente des avantages ou inconvénients:
+${isRef
+  ?"ReferenSEO: utiliser des paragraphes simples, PAS de liste à puces. Format: <!-- wp:paragraph --><p>✅ Blabla</p><!-- /wp:paragraph --> et <!-- wp:paragraph --><p>❌ Blabla</p><!-- /wp:paragraph -->"
+  :"Avantages → chaque item: <!-- wp:list-item --><li>✅ Blabla</li><!-- /wp:list-item --> | Inconvénients → <!-- wp:list-item --><li>❌ Blabla</li><!-- /wp:list-item -->"}
+CHIFFRES: toujours en chiffres (2026 pas "deux mille vingt-six", 49€ pas "quarante-neuf euros", 3 pas "trois" sauf début de phrase).
 [4] FAQ: 3 questions PAA, réponses 50-150 mots. ${useYear?"Année dans FAQ: [current_date format=Y]":""}
 [5] CONCLUSION+CTA: ${isLM?"bénéfice concret AVANT l'action.":"CTA clair."} Fin: <!-- wp:shortcode -->${scEnd}<!-- /wp:shortcode -->
 RAPPEL ANNÉE: ${useYear?"wp_title avec [current_date format=Y]. PAS de H1 dans html_content. Aucun chiffre d'année dans le contenu, meta_title ou meta_description.":""}
