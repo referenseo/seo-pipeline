@@ -35,6 +35,12 @@ const ARTICLE_TYPES_STANDARD = [
   {id:"vente_liens",     label:"Vente de liens",    icon:"🔗", desc:"Liens sponsorisés intégrés naturellement"},
 ];
 
+const ARTICLE_TYPES_REFERENSEO = [
+  {id:"article_simple",  label:"Article simple",   icon:"📝", desc:"SEO classique, bien structuré"},
+  {id:"comparatif",      label:"Comparatif",        icon:"⚖️",  desc:"Classement et aide au choix, clics affiliés"},
+  {id:"vente_liens",     label:"Vente de liens",    icon:"🔗", desc:"Liens sponsorisés intégrés naturellement"},
+];
+
 // ─── BRIEFS ───────────────────────────────────────────────────────────────────
 const BRIEFS = {
   article_simple: `TYPE: article simple
@@ -168,7 +174,8 @@ function buildArticlePrompt(s,k,site,wc,instructions,prevData,profile,articleTyp
   const useYear=profile?.useYearVars!==false,scIntro=profile?.shortcodeIntro||"",scEnd=profile?.shortcodeConclusion||"";
   const snippetBg=profile?.snippetEnabled?(profile?.snippetBg||"#fdeecd"):null;
   const isLM=site.toLowerCase().includes("lesmakers");
-  const brief=isLM&&articleType?BRIEFS[articleType]||"":"";
+  const isRef=site.toLowerCase().includes("referenseo");
+  const brief=(isLM||isRef)&&articleType?BRIEFS[articleType]||"":"";
   const yearNote=useYear
     ?"⚠️ RÈGLE ANNÉE: remplacer TOUTE occurrence de l'année (2026, 2025, etc.) par le shortcode [current_date format=Y] — dans le corps, les H2, les H3, partout. Ne jamais écrire un chiffre d'année directement."
     :"Écrire l'année en toutes lettres si nécessaire.";
@@ -195,7 +202,7 @@ Générer dans review_header_data: {"nom_outil":"...","note":0.0,"resume":"...",
 Ce composant sera rendu en bloc Gutenberg structuré avant l'introduction.`:"";
 
   return {
-    system:`Tu es le rédacteur éditorial senior de ${site}. ${CURRENT_YEAR}. ${isLM?"Voix directe, lucide, business Les Makers.":"Voix professionnelle et claire."} 3 phases obligatoires. JSON uniquement.`,
+    system:`Tu es le rédacteur éditorial senior de ${site}. ${CURRENT_YEAR}. ${isLM?"Voix directe, lucide, business Les Makers.":isRef?"Voix d'expert SEO personnel, avis concret, français naturel. Jamais de tournures anglicisées ou génériques.":"Voix professionnelle et claire."} 3 phases obligatoires. JSON uniquement.`,
     user:`Rédige un article SEO de ${wc} mots sur: "${s}".
 
 CONTEXTE SEO:
@@ -212,6 +219,16 @@ ${linkSaleInstr}
 ${reviewInstr}
 ${brief?`\n════ BRIEF OBLIGATOIRE — TYPE: ${articleType?.toUpperCase()} ════\n${brief}\n════ FIN BRIEF ════`:""}
 ${sig&&isLM?`\n════ SIGNATURE ÉDITORIALE ════\n${sig}\n════`:""}
+${isRef?`\n════ VOIX ÉDITORIALE REFERENSEO — NON NÉGOCIABLE ════
+Cet article doit sonner comme l'avis personnel d'un expert SEO francophone, pas comme un contenu généré.
+RÈGLES ABSOLUES:
+- Phrases 100% françaises naturelles. INTERDIT: "en termes de", "au niveau de", "dans le cadre de", "il est important de noter", "n'hésitez pas à", "cela étant dit", "en ce sens", "force est de constater", "il convient de"
+- Ton d'avis personnel : "j'ai testé", "selon mon expérience", "ce que j'apprécie", "ce qui m'a surpris", "à mon sens"
+- Concret et précis : chiffres réels, exemples vécus, cas d'usage spécifiques
+- Jamais de contenu interchangeable qu'on pourrait retrouver mot pour mot ailleurs
+- Chaque H2 doit apporter une vraie information, pas une reformulation du titre
+- Zéro jargon marketing anglicisé, zéro phrase creuse
+════`:""}
 
 PHASE 1 — PRÉPARATION:
 mot_cle_principal_final, mots_cles_secondaires_final (5), intention_finale, angle_final, promesse_article, hook_verite${articleType==="review"?", review_header_data":""}
@@ -581,12 +598,11 @@ function SiteSelector({sites,onSelect,onManage}){
 }
 
 // ─── ARTICLE TYPE SELECTOR ────────────────────────────────────────────────────
-function ArticleTypeSelector({isLesmakersActive,selected,onChange}){
-  const types=isLesmakersActive?ARTICLE_TYPES_LESMAKERS:ARTICLE_TYPES_STANDARD;
+function ArticleTypeSelector({types,siteBadge,selected,onChange}){
   return(
     <div>
       <label style={{display:"block",fontSize:11,fontWeight:700,color:C.textMuted,marginBottom:8,letterSpacing:"0.04em",textTransform:"uppercase"}}>
-        Type d'article {isLesmakersActive&&<span style={{fontSize:10,background:C.yellowLight,color:C.yellowDark,padding:"1px 6px",borderRadius:99,fontWeight:600,marginLeft:4}}>Les Makers</span>}
+        Type d'article {siteBadge&&<span style={{fontSize:10,background:C.yellowLight,color:C.yellowDark,padding:"1px 6px",borderRadius:99,fontWeight:600,marginLeft:4}}>{siteBadge}</span>}
       </label>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
         {types.map(t=>(
@@ -837,7 +853,8 @@ export default function App(){
 
   const queueForSite=sortQueue(queue.filter(q=>q.siteId===activeSite?.name));
   const pendingCount=queueForSite.filter(q=>q.status==="queued").length;
-  const typesMeta=isLesmakersActive?ARTICLE_TYPES_LESMAKERS:ARTICLE_TYPES_STANDARD;
+  const isReferenseoActive=activeSite?.name?.toLowerCase().includes("referenseo")||activeSite?.wpUrl?.toLowerCase().includes("referenseo");
+  const typesMeta=isLesmakersActive?ARTICLE_TYPES_LESMAKERS:isReferenseoActive?ARTICLE_TYPES_REFERENSEO:ARTICLE_TYPES_STANDARD;
 
   const navStyle=(t)=>({display:"flex",alignItems:"center",gap:7,padding:"0 16px",height:46,border:"none",background:"none",cursor:"pointer",fontSize:13,fontWeight:tab===t?700:500,color:tab===t?C.text:C.textMuted,borderBottom:tab===t?`2.5px solid ${C.yellow}`:"2.5px solid transparent",transition:"all 0.15s",fontFamily:"inherit",marginBottom:-1});
 
@@ -902,7 +919,7 @@ export default function App(){
               </div>
 
               <div style={{marginBottom:16}}>
-                <ArticleTypeSelector isLesmakersActive={isLesmakersActive} selected={articleType} onChange={setArticleType}/>
+                <ArticleTypeSelector types={typesMeta} siteBadge={isLesmakersActive?"Les Makers":isReferenseoActive?"ReferenSEO":null} selected={articleType} onChange={setArticleType}/>
               </div>
 
               {articleType==="vente_liens"&&(
