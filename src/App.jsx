@@ -14,7 +14,7 @@ const C = {
 };
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
-const CURRENT_YEAR = 2026;
+const CURRENT_YEAR = new Date().getFullYear();
 const LESMAKERS_SITE = "lesmakers.fr";
 const REFERENSEO_COLOR = "#2daae1";
 const IMAGE_PALETTE = ["#abcee3","#f3c05d","#dd6b76","#ed948f","#ce9aca"];
@@ -49,6 +49,21 @@ STRUCTURE: Hook → Introduction → Bloc réponse rapide → Développement en 
 RÈGLES: ton direct, humain, concret. Pas de keyword stuffing. Au moins 1 exemple ou donnée concrète par grande section.
 INTERDIT: contenu générique, titres sur-optimisés, phrases artificielles.`,
 
+  article_simple_referenseo: `TYPE: article simple ReferenSEO
+OBJECTIF: Article SEO d'expert solo. Utile, tranché, basé sur l'expérience terrain. Ranker sur requêtes informationnelles et asseoir l'autorité.
+INTERDIT ABSOLU ET NON NÉGOCIABLE: le mot "Maker", "Makers" ou "Les Makers" ne doit apparaître nulle part dans l'article — ni dans le corps, ni dans les titres, ni dans les métadonnées.
+STRUCTURE: Hook terrain → Introduction (contexte + promesse concrète) → Bloc réponse rapide → Développement en H2 actionnables → FAQ 3 questions PAA → Conclusion + CTA naturel
+RÈGLES: chaque H2 apporte une information qu'on ne trouve pas formulée ainsi ailleurs. Minimum 1 moment signature par article. Minimum 1 chiffre concret par grande section. Ton "je" assumé.
+INTERDIT: contenu générique, H2 reformulant le titre, phrases sans substance, listes à puces sans explication, ton de média neutre.
+CHECK FINAL: hook terrain ✓ moment signature présent ✓ chiffres concrets ✓ avis personnel tranché ✓ pas de contenu interchangeable ✓`,
+
+  article_simple_100jours: `TYPE: article simple 100 jours pour entreprendre
+OBJECTIF: Guide de conformité et d'aide à la décision pour dirigeants de TPE/PME. Utile, précis, ancré dans la réalité réglementaire et chiffrée. Zéro contenu inspirationnel.
+STRUCTURE: Hook (constat de réalité changeante) → Introduction (mise en tension pratique) → Bloc réponse rapide → Corps structuré (obligation/contexte → cas → options → coûts → étapes → pièges) → FAQ 3 questions PAA → Conclusion synthèse + CTA naturel
+RÈGLES: au moins 1 référence réglementaire précise (loi, taux, date). Au moins 1 chiffre concret par grande section. Chaque H2 correspond à une étape de décision. Ton "vous" systématique, "nous" côté rédaction.
+INTERDIT: tutoiement, "je" rédactionnel, H2 dans le désordre logique, contenu vague sans chiffres, promesses marketing, contenu mindset.
+CHECK FINAL: ancrage réglementaire présent ✓ chiffres concrets partout ✓ structure décision logique ✓ ton "vous/nous" maintenu ✓ pièges identifiés ✓ lecteur sait quoi faire après ✓`,
+
   comparatif: `TYPE: comparatif
 OBJECTIF: Article comparatif à forte intention d'achat. Aider le lecteur à choisir rapidement, générer des clics affiliés.
 STRUCTURE:
@@ -63,6 +78,22 @@ STRUCTURE:
 RÈGLES: chaque outil avec angle clair, titres différenciants, structure identique pour tous.
 INTERDIT: lister sans analyser, titres génériques, structures différentes, contenu vague.
 CHECK FINAL: encart avant intro ✓ résumé après intro ✓ structure uniforme ✓ aide réelle au choix ✓`,
+
+  comparatif_referenseo: `TYPE: comparatif ReferenSEO
+OBJECTIF: Comparatif SEO à forte valeur ajoutée. Aider le lecteur à choisir le bon outil avec un avis d'expert personnel. Générer des clics affiliés de manière naturelle.
+INTERDIT ABSOLU ET NON NÉGOCIABLE: le mot "Maker", "Makers" ou "Les Makers" ne doit apparaître nulle part dans l'article — ni dans le corps, ni dans les titres, ni dans les métadonnées.
+INTERDIT ABSOLU: les encarts "📢 Trop occupé pour tout lire" et "🕰️ Pas le temps de tout lire". Jamais. Zéro encart de ce type.
+INTERDIT: "À qui ça s'adresse", "Ce qu'on a apprécié" (trop générique).
+STRUCTURE:
+1. Introduction (pas d'encart avant): accroche directe sur le problème, contexte de la sélection, critères retenus. 3-4 phrases max.
+2. Listing des outils: chaque outil avec H3 numéroté "1. Nom — [accroche différenciante]".
+   Structure par outil: Présentation (2-3 phrases) → Fonctionnalités clés → Tarifs → Ce que j'aime (lignes <p>✅ texte</p>, PAS de <li>) → Ce que j'aime moins (lignes <p>❌ texte</p>, PAS de <li>) → Mon verdict (1 phrase tranchée)
+3. H2 informatif #1 — "Comment choisir [catégorie] : les critères qui comptent vraiment": 2-3 critères décisifs expliqués concrètement.
+4. H2 informatif #2 — question pratique (budget, gratuit vs payant, etc.): réponse directe chiffrée, nuances selon profil.
+5. FAQ: 3 questions PAA concrètes, réponses 50-100 mots, ton d'expert.
+6. Conclusion: recommandation finale selon 2-3 profils types. Pas d'encart, texte direct. CTA naturel si pertinent.
+RÈGLES: H3 numérotés 1. 2. 3. — chiffres en chiffres — ✅/❌ en <p> simples jamais en <li> — ton "je" assumé — opinion tranchée par outil.
+CHECK FINAL: pas d'encart intro ✓ H3 numérotés ✓ ✅❌ en <p> ✓ 2 H2 informatifs ✓ chiffres en chiffres ✓ avis personnel ✓`,
 
   comparatif_referenseo: `TYPE: comparatif ReferenSEO
 OBJECTIF: Comparatif SEO à forte valeur ajoutée. Aider le lecteur à choisir le bon outil avec un avis d'expert personnel. Générer des clics affiliés de manière naturelle.
@@ -191,6 +222,33 @@ MOMENTS SIGNATURE (2-4/article): Vérité terrain | Erreur fréquente | Insight 
 PUNCHLINES: 1 par H2 minimum. CTA: bénéfice concret AVANT l'action.
 RÈGLES: phrases courtes, concret > théorie, 1 idée/paragraphe. INTERDIT: phrases molles, jargon, ton neutre.`;
 
+const SIGNATURE_REFERENSEO = `SIGNATURE ÉDITORIALE REFERENSEO — NON NÉGOCIABLE
+Voix de Matthieu Verne, expert solo, 25 ans de terrain. Tutoiement systématique et assumé. "Je" rédactionnel partout — jamais "nous", jamais "on" au sens collectif. Le lecteur c'est "tu", "ton", "tes".
+HOOK (1ère phrase): assertion forte à la première personne, ou promesse de soulagement immédiat. INTERDIT: "Dans cet article", "Bienvenue", intro factuelle neutre.
+MOMENTS SIGNATURE (2-3/article — choisir parmi):
+- Opinion directe non édulcorée: "X s'impose clairement comme le meilleur choix", "j'ai une préférence personnelle pour Y — voici pourquoi"
+- Test vécu: "j'ai testé [outil/méthode] — voici ce que ca donne vraiment"
+- Interpellation d'urgence douce: "Si tu n'as pas encore essayé X, il est urgent de le tester"
+- Scénarisation du bénéfice: "Imagine : [situation concrète où l'outil/méthode fonctionne pour le lecteur]"
+- Insight contre-intuitif: "Ce que la plupart des guides ne disent pas sur [sujet]"
+PUNCHLINES: 1 par H2 minimum. Phrase courte, tranchée, mémorisable.
+TRILOGIE DE MARQUE: les articles s'inscrivent dans l'univers "lancer, développer, investir".
+RÈGLES: opinion assumée > neutralité de façade. Concret et actionnable. Chiffres réels. Ton mentor qui pousse à l'action.
+INTERDIT ABSOLU: "Maker", "Makers", "Les Makers". Vouvoiement. "Nous", "notre", "on" au sens collectif. Ton neutre. Phrases molles. Jargon anglicisé. "Il est important de", "n'hésitez pas à", "en termes de".`;
+
+const SIGNATURE_100JOURS = `SIGNATURE ÉDITORIALE 100 JOURS POUR ENTREPRENDRE — NON NÉGOCIABLE
+Voix d'équipe experte, consultatif et bienveillant. On s'adresse à des dirigeants de TPE/PME (35-55 ans) qui ont besoin de traduire des obligations réglementaires en actions concrètes. Jamais de tutoiement. Toujours "vous", "votre", "vos". Côté rédaction : "nous".
+HOOK (1ère phrase): constat de réalité changeante qui nomme exactement la situation du lecteur. INTERDIT: "Dans cet article", "Bienvenue", storytelling personnel, anecdote.
+STRUCTURE TYPE INVARIABLE: obligation/contexte → définitions des cas → options disponibles → coûts concrets → étapes → pièges → conclusion synthèse.
+MOMENTS SIGNATURE (2-3/article — choisir parmi):
+- Mise en garde concrète: "Attention cependant : sans [action précise], [conséquence réglementaire]"
+- Ancrage chiffré: référence à une loi précise, un taux officiel, une date d'application
+- Réalisme nuancé: "X ne remplacera pas Y, mais peut considérablement [bénéfice concret]"
+- Orientation action: "Concrètement, dans une structure de [taille], la première chose à vérifier c'est..."
+PUNCHLINES: 1 par H2 minimum. Phrase courte, factuelle, orientée décision.
+RÈGLES: ancrage chiffré et réglementaire obligatoire (lois, taux, dates). Chaque H2 fait avancer vers une décision. Format guide de conformité pour décideur pressé. Zéro promesse absolue, toujours nuancer.
+INTERDIT: tutoiement, "je" rédactionnel, enthousiasme marketing, "il suffit de", "c'est simple", contenu mindset/motivation, promesses irréalistes.`;
+
 const DEFAULT_PROFILE = {
   signature:SIGNATURE_DEFAULT, shortcodeIntro:`[elementor-template id="22062"]`,
   shortcodeConclusion:`[elementor-template id="1148"]`, useYearVars:true,
@@ -214,8 +272,15 @@ function buildArticlePrompt(s,k,site,wc,instructions,prevData,profile,articleTyp
   const snippetBg=profile?.snippetEnabled?(profile?.snippetBg||"#fdeecd"):null;
   const isLM=site.toLowerCase().includes("lesmakers");
   const isRef=site.toLowerCase().includes("referenseo");
-  const briefKey=isRef&&articleType==="comparatif"?"comparatif_referenseo":articleType;
-  const brief=(isLM||isRef)&&briefKey?BRIEFS[briefKey]||"":"";
+  const is100j=site.toLowerCase().includes("100jours")||site.toLowerCase().includes("100 jours");
+  const briefKey=isRef&&articleType==="comparatif"
+    ?"comparatif_referenseo"
+    :isRef&&articleType==="article_simple"
+    ?"article_simple_referenseo"
+    :is100j&&articleType==="article_simple"
+    ?"article_simple_100jours"
+    :articleType;
+  const brief=(isLM||isRef||is100j)&&briefKey?BRIEFS[briefKey]||"":"";
   const yearNote=useYear
     ?"⚠️ RÈGLE ANNÉE: remplacer TOUTE occurrence de l'année (2026, 2025, etc.) par le shortcode [current_date format=Y] — dans le corps, les H2, les H3, partout. Ne jamais écrire un chiffre d'année directement."
     :"Écrire l'année en toutes lettres si nécessaire.";
@@ -242,35 +307,24 @@ Générer dans review_header_data: {"nom_outil":"...","note":0.0,"resume":"...",
 Ce composant sera rendu en bloc Gutenberg structuré avant l'introduction.`:"";
 
   return {
-    system:`Tu es le rédacteur éditorial senior de ${site}. ${CURRENT_YEAR}. ${isLM?"Voix directe, lucide, business Les Makers.":isRef?"Voix d'expert SEO personnel, avis concret, français naturel. Jamais de tournures anglicisées ou génériques.":"Voix professionnelle et claire."} 3 phases obligatoires. JSON uniquement.`,
-    user:`Rédige un article SEO de ${wc} mots sur: "${s}".
-
+    system:`Tu es le redacteur editorial senior de ${site}. ${CURRENT_YEAR}. ${isLM?"Voix directe, lucide, business Les Makers.":isRef?"Tu es Matthieu Verne, expert solo avec 25 ans de terrain. Tutoiement systematique. Je partout. Opinion directe assumee. INTERDIT ABSOLU: Maker, Makers, Les Makers, vouvoiement, ton neutre.":is100j?"Voix equipe experte, consultatif. Tu t'adresses a des dirigeants de TPE/PME. Vouvoiement systematique. Ancrage reglementaire et chiffre obligatoire. Jamais de tutoiement, jamais de je redactionnel.":"Voix professionnelle et claire."} 3 phases obligatoires. JSON uniquement.`,
+    user:`Redige un article SEO de ${wc} mots sur: "${s}".
+${brief?`\n════ BRIEF OBLIGATOIRE — TYPE: ${articleType?.toUpperCase()} ════\n${brief}\n════ FIN BRIEF ════\n`:""}
 CONTEXTE SEO:
-- Mot-clé principal: ${prevData?.longtail?.mot_cle_principal||k}
+- Mot-cle principal: ${prevData?.longtail?.mot_cle_principal||k}
 - Secondaires: ${(prevData?.longtail?.mots_cles_secondaires||[]).join(", ")||k}
 - Intention: ${prevData?.longtail?.intention_dominante||"informationnelle"}
 - Angle: ${prevData?.longtail?.angle_editorial||"guide pratique"}
-- Audience: ${AUDIENCE}
+- Audience: ${is100j?"Dirigeants de TPE/PME (35-55 ans), commerce/services/artisanat, confrontes a des decisions concretes : statut juridique, banque pro, logiciels, conformite reglementaire. Pas des experts du droit.":isRef?"Solopreneurs et aspirants entrepreneurs digitaux qui veulent lancer ou developper leur business en ligne. Ils cherchent des conseils actionnables de quelqu'un qui a vraiment fait.":AUDIENCE}
 - Ton: ${ton}
 - ${ctaInstr}
-- Requêtes: ${(prevData?.competitors?.requetes_conversationnelles||[]).slice(0,8).join(" / ")}
+- Requetes: ${(prevData?.competitors?.requetes_conversationnelles||[]).slice(0,8).join(" / ")}
 - Consignes: ${instructions}
 ${linkSaleInstr}
 ${reviewInstr}
-${brief?`\n════ BRIEF OBLIGATOIRE — TYPE: ${articleType?.toUpperCase()} ════\n${brief}\n════ FIN BRIEF ════`:""}
-${sig&&isLM?`\n════ SIGNATURE ÉDITORIALE ════\n${sig}\n════`:""}
-${isRef?`\n════ VOIX ÉDITORIALE REFERENSEO — NON NÉGOCIABLE ════
-Cet article doit sonner comme l'avis personnel d'un expert SEO francophone, pas comme un contenu généré.
-RÈGLES ABSOLUES:
-- Phrases 100% françaises naturelles. INTERDIT: "en termes de", "au niveau de", "dans le cadre de", "il est important de noter", "n'hésitez pas à", "cela étant dit", "en ce sens", "force est de constater", "il convient de"
-- Ton à la première personne du singulier: "j'ai testé", "selon mon expérience", "ce que j'apprécie", "ce qui m'a surpris", "à mon sens", "j'ai remarqué", "mon avis"
-- INTERDIT: "nous", "notre", "on" au sens collectif — toujours "je", "mon", "ma", "mes"
-- Concret et précis : chiffres réels, exemples vécus, cas d'usage spécifiques
-- Jamais de contenu interchangeable qu'on pourrait retrouver mot pour mot ailleurs
-- Chaque H2 doit apporter une vraie information, pas une reformulation du titre
-- Zéro jargon marketing anglicisé, zéro phrase creuse
-- INTERDIT: tout usage du mot "Maker" ou "Makers"
-════`:""}
+${sig&&isLM?`\n════ SIGNATURE EDITORIALE LM ════\n${sig}\n════`:""}
+${isRef?`\n════ SIGNATURE EDITORIALE REFERENSEO ════\n${SIGNATURE_REFERENSEO}\n════`:""}
+${is100j?`\n════ SIGNATURE EDITORIALE 100 JOURS ════\n${SIGNATURE_100JOURS}\n════`:""}
 
 PHASE 1 — PRÉPARATION:
 mot_cle_principal_final, mots_cles_secondaires_final (5), intention_finale, angle_final, promesse_article, hook_verite${articleType==="review"?", review_header_data":""}
@@ -284,19 +338,19 @@ ORDRE OBLIGATOIRE DU CONTENU (respecter strictement cette séquence):
 [2] INTRO (80 mots max): ${isLM?"hook vérité ligne 1 (jamais 'Dans cet article')":"accroche directe"}, contexte + mot-clé naturel. Dernière ligne de l'intro: <!-- wp:shortcode -->${scIntro}<!-- /wp:shortcode -->
 ⚠️ Le bloc [1] SNIPPET doit impérativement apparaître AVANT le bloc [2] INTRO dans html_content. JAMAIS après.
 [3] CORPS: ${isLM?"H2 humains avec verbe, punchline/section, 2-4 moments signature, 1 stat concrète.":"H2 naturels, exemples concrets."} Paragraphes 3-4 lignes. Transitions fluides. ${yearNote}
-LISTES AVANTAGES/INCONVÉNIENTS: quand une section présente des avantages ou inconvénients:
+LISTES AVANTAGES/INCONVENIENTS: quand une section presente des avantages ou inconvenients:
 ${isRef
-  ?"ReferenSEO: utiliser des paragraphes simples, PAS de liste à puces. Format: <!-- wp:paragraph --><p>✅ Blabla</p><!-- /wp:paragraph --> et <!-- wp:paragraph --><p>❌ Blabla</p><!-- /wp:paragraph -->"
-  :"Avantages → chaque item: <!-- wp:list-item --><li>✅ Blabla</li><!-- /wp:list-item --> | Inconvénients → <!-- wp:list-item --><li>❌ Blabla</li><!-- /wp:list-item -->"}
-CHIFFRES: toujours en chiffres (2026 pas "deux mille vingt-six", 49€ pas "quarante-neuf euros", 3 pas "trois" sauf début de phrase).
-[4] FAQ: 3 questions PAA, réponses 50-150 mots. ${useYear?"Année dans FAQ: [current_date format=Y]":""}
-[5] CONCLUSION+CTA: ${isLM?"bénéfice concret AVANT l'action.":"CTA clair."} Fin: <!-- wp:shortcode -->${scEnd}<!-- /wp:shortcode -->
-RAPPEL ANNÉE: ${useYear?"wp_title avec [current_date format=Y]. PAS de H1 dans html_content. Aucun chiffre d'année dans le contenu, meta_title ou meta_description.":""}
-ANTI-STUFFING: >5 mots mot-clé collé=INTERDIT.
-SEO: densité 1-1.5%, sémantique 15+, entités nommées, 2-3 ancres maillage, EEAT.
-⚠️ IMPORTANT: Le contenu doit tenir dans une seule réponse JSON. Être concis et percutant plutôt que long et répétitif. Pas de remplissage.
+  ?"ReferenSEO: utiliser des paragraphes simples, PAS de liste a puces. Format: <!-- wp:paragraph --><p>✅ Blabla</p><!-- /wp:paragraph --> et <!-- wp:paragraph --><p>❌ Blabla</p><!-- /wp:paragraph -->"
+  :"Avantages → chaque item: <!-- wp:list-item --><li>✅ Blabla</li><!-- /wp:list-item --> | Inconvenients → <!-- wp:list-item --><li>❌ Blabla</li><!-- /wp:list-item -->"}
+CHIFFRES: toujours en chiffres (2026 pas "deux mille vingt-six", 49€ pas "quarante-neuf euros", 3 pas "trois" sauf debut de phrase).
+[4] FAQ: 3 questions PAA, reponses 50-150 mots. ${useYear?"Annee dans FAQ: [current_date format=Y]":""}
+[5] CONCLUSION+CTA: ${isLM?"benefice concret AVANT l'action.":"CTA clair."} Fin: <!-- wp:shortcode -->${scEnd}<!-- /wp:shortcode -->
+RAPPEL ANNEE: ${useYear?"wp_title avec [current_date format=Y]. PAS de H1 dans html_content. Aucun chiffre d'annee dans le contenu, meta_title ou meta_description.":""}
+ANTI-STUFFING: >5 mots mot-cle colle=INTERDIT.
+SEO: densite 1-1.5%, semantique 15+, entites nommees, 2-3 ancres maillage, EEAT.
+⚠️ IMPORTANT: Le contenu doit tenir dans une seule reponse JSON. Etre concis et percutant plutot que long et repetitif. Pas de remplissage.
 
-PHASE 3 — AUTO-CORRECTION: phrases SEO artificielles? générique IA? H2 actionnable? hook tension? ${isLM?"moments signature (min 2)?":""} CTA orienté résultat?
+PHASE 3 — AUTO-CORRECTION: phrases SEO artificielles? generique IA? H2 actionnable? hook tension? ${isLM?"moments signature (min 2)?":""} ${isRef?"moment signature present? ton 'je' et tutoiement maintenus partout? opinion directe assumee? aucune occurrence de 'Maker'/'Makers'? aucune phrase interchangeable?":""} ${is100j?"ton 'vous/nous' maintenu partout? ancrage reglementaire ou chiffre present? structure decision logique? pieges identifies? zero contenu vague sans chiffres?":""} CTA oriente resultat?
 
 JSON: {"mot_cle_principal_final":"...","mots_cles_secondaires_final":["..."],"angle_final":"...","promesse_article":"...","hook_verite":"...","meta_title":"...","meta_description":"...","wp_title":"...","html_content":"...","word_count":0,"reading_time_minutes":0,"seo_score_estimate":0,"champ_semantique":["..."],"ancres_maillage":[{"ancre":"...","sujet_cible":"..."}],"excerpt":"...","moments_signature_utilises":["..."],"auto_correction_log":["..."]${articleType==="review"?`,"review_header_data":{"nom_outil":"...","note":0,"resume":"...","lien_affilie":"...","logo_url":"..."}`:""}}`
   };
@@ -372,9 +426,9 @@ async function generateImageGemini(subject,geminiKey,paletteColor,isReferenseo=f
 
   const prompt=isReferenseo
     ?`Create a professional blog featured image for an article about: "${subject}".
-Style: high-quality royalty-free style photograph or realistic illustration. NOT flat design.
-The image should feel like a professional stock photo: sharp, modern, well-lit, editorial feel.
-Subject: something visually relevant to the article topic — a person working, a laptop, a concept scene, a business environment.
+Style: high-quality editorial photograph or realistic illustration. Sharp, modern, well-lit. NOT flat design. NOT generic stock photo of a person at a laptop.
+The image MUST visually represent the specific topic: "${subject}". Think about what concept, object, tool, chart, or scene is directly associated with this topic — and illustrate that, not a generic office scene.
+Examples: an article about "meilleur VPN" → a padlock or shield icon in a tech environment. "Ouvrir un compte titre" → financial charts or a brokerage interface. "Formation SEO" → a search engine results page or keyword ranking graph.
 NO text, NO letters, NO numbers, NO logo, NO watermark.
 Aspect ratio: 16:9 horizontal landscape. Professional and clean.`
     :`Create a minimalist flat illustration for a blog article about: "${subject}".
