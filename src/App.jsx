@@ -261,6 +261,10 @@ const loadLS=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||"null")??d}c
 const saveLS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 const DEFAULT_INSTRUCTIONS={"intention":"","competitors":"","longtail":"","article":""};
 
+// ─── LINKING INTERNE ─────────────────────────────────────────────────────────
+const SHEET_URL="https://docs.google.com/spreadsheets/d/13xZYfByQEM5EYb_S3tpmJHRrLcWSeGNQwSq8ukNUFyw/edit";
+const SHEET_CSV_BASE="https://docs.google.com/spreadsheets/d/13xZYfByQEM5EYb_S3tpmJHRrLcWSeGNQwSq8ukNUFyw/gviz/tq?tqx=out:csv&sheet=";
+
 // ─── SYSTEM BASE ──────────────────────────────────────────────────────────────
 const SYSTEM_BASE=(s)=>`Tu es un expert SEO et rédacteur web francophone spécialisé pour "${s}". Nous sommes en ${CURRENT_YEAR}. Tu réponds UNIQUEMENT en JSON valide, sans backticks, sans commentaires.`;
 
@@ -343,6 +347,12 @@ ${isRef
   ?"ReferenSEO: utiliser des paragraphes simples, PAS de liste a puces. Format: <!-- wp:paragraph --><p>✅ Blabla</p><!-- /wp:paragraph --> et <!-- wp:paragraph --><p>❌ Blabla</p><!-- /wp:paragraph -->"
   :"Avantages → chaque item: <!-- wp:list-item --><li>✅ Blabla</li><!-- /wp:list-item --> | Inconvenients → <!-- wp:list-item --><li>❌ Blabla</li><!-- /wp:list-item -->"}
 CHIFFRES: toujours en chiffres (2026 pas "deux mille vingt-six", 49€ pas "quarante-neuf euros", 3 pas "trois" sauf debut de phrase).
+TITRES (H2, H3, wp_title, meta_title): interdire le CamelCase — ecrire en minuscules apres la majuscule initiale. Ex: "Meilleur logiciel comptabilite" pas "Meilleur Logiciel Comptabilite".
+TABLEAUX: quand le contenu s'y prete (comparaison de tarifs, de fonctionnalites, de caracteristiques, recapitulatif, grille de donnees chiffrees), generer un tableau Gutenberg. Format obligatoire:
+<!-- wp:table {"hasFixedLayout":true} -->
+<figure class="wp-block-table"><table><thead><tr><th>Critere</th><th>Option A</th><th>Option B</th></tr></thead><tbody><tr><td>Donnee</td><td>Valeur A</td><td>Valeur B</td></tr></tbody></table></figure>
+<!-- /wp:table -->
+Maximum 2 tableaux par article. Ne pas forcer un tableau si les donnees ne s'y pretent pas naturellement.
 [4] FAQ: 3 questions PAA, reponses 50-150 mots. ${useYear?"Annee dans FAQ: [current_date format=Y]":""}
 [5] CONCLUSION+CTA: ${isLM?"benefice concret AVANT l'action.":"CTA clair."} Fin: <!-- wp:shortcode -->${scEnd}<!-- /wp:shortcode -->
 RAPPEL ANNEE: ${useYear?"wp_title avec [current_date format=Y]. PAS de H1 dans html_content. Aucun chiffre d'annee dans le contenu, meta_title ou meta_description.":""}
@@ -733,6 +743,190 @@ function LinkSaleConfig({config,onChange}){
   );
 }
 
+// ─── LINKING TAB ──────────────────────────────────────────────────────────────
+function LinkingTab({activeSite}){
+  const [linkSubject,setLinkSubject]=useState("");
+  const [linkKeyword,setLinkKeyword]=useState("");
+  const [linkResults,setLinkResults]=useState([]);
+  const [linkStatus,setLinkStatus]=useState("idle");
+  const [linkError,setLinkError]=useState("");
+  const [sheetData,setSheetData]=useState(null);
+  const [copied,setCopied]=useState(null);
+
+  const isReferenseo=activeSite?.name?.toLowerCase().includes("referenseo")||activeSite?.wpUrl?.toLowerCase().includes("referenseo");
+  const isLesmakers=activeSite?.name?.toLowerCase().includes("lesmakers")||activeSite?.wpUrl?.toLowerCase().includes("lesmakers");
+  const is100jours=activeSite?.name?.toLowerCase().includes("100jours")||activeSite?.name?.toLowerCase().includes("100 jours");
+
+  const getSheetTab=()=>{
+    if(isReferenseo)return "ReferenSEO";
+    if(isLesmakers)return "LesMakers";
+    if(is100jours)return "100Jours";
+    return "LesMakers";
+  };
+
+  async function loadSheetData(){
+    const tab=getSheetTab();
+    const url=`${SHEET_CSV_BASE}${encodeURIComponent(tab)}`;
+    const res=await fetch(url);
+    if(!res.ok)throw new Error(`Erreur chargement Sheet (HTTP ${res.status}) — verifie que le Sheet est partage en lecture publique`);
+    const text=await res.text();
+    const lines=text.trim().split("\n");
+    if(lines.length<2)throw new Error("Sheet vide ou inaccessible");
+    const headers=lines[0].split(",").map(h=>h.replace(/"/g,"").trim().toLowerCase());
+    const rows=lines.slice(1).map(line=>{
+      const cols=[];let current="";let inQuote=false;
+      for(let i=0;i<line.length;i++){
+        const ch=line[i];
+        if(ch==='"'){inQuote=!inQuote;}
+        else if(ch===","&&!inQuote){cols.push(current.trim());current="";}
+        else{current+=ch;}
+      }
+      cols.push(current.trim());
+      const row={};
+      headers.forEach((h,i)=>{row[h]=(cols[i]||"").replace(/^"|"$/g,"");});
+      return row;
+    }).filter(r=>(r.url||"").startsWith("http"));
+    return rows;
+  }
+
+  function scoreArticle(article,subject,keyword){
+    const normalize=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+    const subjectWords=normalize(subject).split(/\s+/).filter(w=>w.length>3);
+    const kwWords=normalize(keyword).split(/\s+/).filter(w=>w.length>3);
+    const allWords=[...new Set([...subjectWords,...kwWords])];
+    const titleField=article["titre de l'article"]||article.titre||article["title"]||"";
+    const kwField=article["mot-cle vise"]||article["mot-cle"]||article["mot-cle vise"]||article["mot cle"]||article.keyword||"";
+    const catField=article.categorie||article["categorie"]||"";
+    const haystack=normalize(`${titleField} ${kwField} ${catField}`);
+    let score=0;
+    allWords.forEach(word=>{if(haystack.includes(word))score+=2;});
+    if(haystack.includes(normalize(keyword)))score+=3;
+    if(haystack.includes(normalize(subject.split(" ").slice(0,3).join(" "))))score+=2;
+    return score;
+  }
+
+  async function handleSearch(){
+    if(!linkSubject.trim()||!linkKeyword.trim())return;
+    setLinkStatus("loading");setLinkError("");setLinkResults([]);
+    try{
+      let data=sheetData;
+      if(!data){data=await loadSheetData();setSheetData(data);}
+      const scored=data
+        .map(row=>({...row,_score:scoreArticle(row,linkSubject,linkKeyword)}))
+        .filter(r=>r._score>0)
+        .sort((a,b)=>b._score-a._score)
+        .slice(0,10);
+      setLinkResults(scored);
+      setLinkStatus("done");
+    }catch(e){setLinkError(e.message);setLinkStatus("error");}
+  }
+
+  function copyItem(idx,title,url){
+    navigator.clipboard.writeText(`${title}\n${url}`);
+    setCopied(idx);setTimeout(()=>setCopied(null),1500);
+  }
+
+  function copyAll(){
+    const text=linkResults.map(r=>{
+      const title=r["titre de l'article"]||r.titre||r.url;
+      return `${title}\n${r.url}`;
+    }).join("\n\n");
+    navigator.clipboard.writeText(text);
+    setCopied("all");setTimeout(()=>setCopied(null),1500);
+  }
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
+      <div style={{display:"flex",justifyContent:"flex-end"}}>
+        <a href={SHEET_URL} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 14px",background:C.card,border:`1.5px solid ${C.border}`,borderRadius:C.radiusSm,fontSize:12,fontWeight:600,color:C.textMuted,textDecoration:"none",boxShadow:C.shadow}}>
+          📊 Ouvrir le calendrier editorial ↗
+        </a>
+      </div>
+      <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:C.radiusLg,padding:"1.5rem",boxShadow:C.shadow}}>
+        <div style={{marginBottom:"1rem"}}>
+          <h3 style={{margin:"0 0 4px",fontSize:15,fontWeight:700,color:C.text}}>Suggestions de linking interne</h3>
+          <p style={{margin:0,fontSize:12,color:C.textMuted}}>
+            Entre le sujet de ton nouvel article — je cherche les articles existants les plus pertinents a lier.
+            {activeSite&&<span style={{marginLeft:6,background:C.yellowLight,color:C.yellowDark,padding:"1px 7px",borderRadius:99,fontSize:11,fontWeight:600}}>{activeSite.name}</span>}
+          </p>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+          <Inp label="Sujet de l'article" value={linkSubject} onChange={e=>setLinkSubject(e.target.value)} placeholder="ex: Comment creer un business en ligne"/>
+          <Inp label="Mot-cle principal" value={linkKeyword} onChange={e=>setLinkKeyword(e.target.value)} placeholder="ex: business en ligne"/>
+        </div>
+        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+          <Btn variant="primary" onClick={handleSearch} disabled={!linkSubject.trim()||!linkKeyword.trim()||linkStatus==="loading"} style={{height:40,fontSize:13,padding:"0 20px"}}>
+            {linkStatus==="loading"?<><Spinner/> Recherche...</>:"🔍 Trouver des liens pertinents"}
+          </Btn>
+          {linkStatus==="done"&&linkResults.length>0&&(
+            <Btn variant="outline" onClick={copyAll} style={{height:40,fontSize:12}}>
+              {copied==="all"?"✓ Copie !":"⎘ Copier tout"}
+            </Btn>
+          )}
+          {sheetData&&(
+            <span style={{fontSize:11,color:C.textFaint,marginLeft:2}}>
+              {sheetData.length} articles indexes ·{" "}
+              <button onClick={()=>{setSheetData(null);setLinkResults([]);setLinkStatus("idle");}} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:C.textFaint,textDecoration:"underline",padding:0,fontFamily:"inherit"}}>
+                Rafraichir
+              </button>
+            </span>
+          )}
+        </div>
+      </div>
+      {linkStatus==="error"&&(
+        <div style={{background:C.redLight,border:`1px solid #FECACA`,borderRadius:C.radius,padding:"12px 16px"}}>
+          <p style={{margin:0,fontSize:13,color:C.red,fontWeight:600}}>⚠ {linkError}</p>
+          <p style={{margin:"4px 0 0",fontSize:11,color:C.red}}>Verifie que le Google Sheet est partage en lecture publique : Partager → "Tout le monde avec le lien" → Lecteur.</p>
+        </div>
+      )}
+      {linkStatus==="done"&&(
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {linkResults.length===0?(
+            <div style={{textAlign:"center",padding:"2.5rem 1rem",background:C.card,border:`1px dashed ${C.border}`,borderRadius:C.radiusLg}}>
+              <p style={{fontSize:28,marginBottom:6}}>🔍</p>
+              <p style={{margin:0,fontSize:14,fontWeight:600,color:C.text}}>Aucun article pertinent trouve</p>
+              <p style={{margin:"4px 0 0",fontSize:12,color:C.textMuted}}>Essaie avec des mots-cles plus generaux, ou complete d'abord le calendrier editorial.</p>
+            </div>
+          ):(
+            <>
+              <p style={{margin:"0 0 4px",fontSize:12,fontWeight:600,color:C.textMuted}}>
+                {linkResults.length} article{linkResults.length>1?"s":""} suggere{linkResults.length>1?"s":""} pour le maillage
+              </p>
+              {linkResults.map((r,i)=>{
+                const title=r["titre de l'article"]||r.titre||r.url;
+                const kw=r["mot-cle vise"]||r["mot-cle"]||r.keyword||"";
+                const cat=r.categorie||r["categorie"]||"";
+                const date=r["date publication / maj"]||r["date publication"]||r.date||"";
+                const url=r.url||"";
+                return(
+                  <div key={i} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"12px 16px",background:C.card,border:`1px solid ${C.border}`,borderRadius:C.radius,boxShadow:C.shadow}}
+                    onMouseEnter={e=>e.currentTarget.style.borderColor=C.yellow+"88"}
+                    onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+                    <div style={{width:28,height:28,borderRadius:C.radiusSm,background:C.yellowLight,border:`1.5px solid ${C.yellow}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:C.yellowDark,flexShrink:0}}>{i+1}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <p style={{margin:"0 0 4px",fontSize:13,fontWeight:700,color:C.text,lineHeight:1.3}}>{title}</p>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:5}}>
+                        {kw&&<span style={{fontSize:10,padding:"1px 7px",background:C.bg,border:`1px solid ${C.border}`,borderRadius:99,color:C.textMuted,fontWeight:500}}>🔑 {kw}</span>}
+                        {cat&&<span style={{fontSize:10,padding:"1px 7px",background:C.bg,border:`1px solid ${C.border}`,borderRadius:99,color:C.textMuted,fontWeight:500}}>📁 {cat}</span>}
+                        {date&&<span style={{fontSize:10,padding:"1px 7px",background:C.bg,border:`1px solid ${C.border}`,borderRadius:99,color:C.textFaint,fontWeight:500}}>📅 {date}</span>}
+                      </div>
+                      <a href={url} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:C.blue,textDecoration:"none",fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"block",maxWidth:"100%"}}>{url}</a>
+                    </div>
+                    <button onClick={()=>copyItem(i,title,url)} title="Copier titre + URL"
+                      style={{width:32,height:32,borderRadius:C.radiusSm,border:`1.5px solid ${C.border}`,background:copied===i?C.greenLight:C.bg,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.2s",color:copied===i?C.green:C.textMuted}}>
+                      {copied===i?"✓":"⎘"}
+                    </button>
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 const PIPELINE_STEPS=[
   {id:"intention",  label:"Intention & Conversion",icon:"🎯",desc:"Décryptage intention + angles CTA"},
@@ -995,7 +1189,7 @@ export default function App(){
       {/* NAV */}
       <div style={{background:C.card,borderBottom:`1px solid ${C.border}`}}>
         <div style={{maxWidth:860,margin:"0 auto",padding:"0 1.5rem",display:"flex",gap:0}}>
-          {[{id:"pipeline",label:"✍️ Générer un article"},{id:"queue",label:"📅 Calendrier éditorial",count:pendingCount}].map(t=>(
+          {[{id:"pipeline",label:"✍️ Générer un article"},{id:"queue",label:"📅 Calendrier éditorial",count:pendingCount},{id:"linking",label:"🔗 Linking interne"}].map(t=>(
             <button key={t.id} style={navStyle(t.id)} onClick={()=>setTab(t.id)}>
               {t.label}
               {t.count>0&&<span style={{background:C.yellow,color:C.text,borderRadius:99,padding:"1px 7px",fontSize:10,fontWeight:700}}>{t.count}</span>}
@@ -1376,6 +1570,12 @@ export default function App(){
             )}
           </div>
         )}
+
+        {/* ── LINKING TAB ── */}
+        {tab==="linking"&&(
+          <LinkingTab activeSite={activeSite}/>
+        )}
+
       </div>
     </div>
   );
