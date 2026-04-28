@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const C = {
@@ -32,6 +32,7 @@ const ARTICLE_TYPES_LESMAKERS = [
 
 const ARTICLE_TYPES_STANDARD = [
   {id:"article_simple",  label:"Article simple",   icon:"📝", desc:"SEO classique, bien structuré"},
+  {id:"comparatif",      label:"Comparatif",        icon:"⚖️",  desc:"Sélection et aide au choix"},
   {id:"vente_liens",     label:"Vente de liens",    icon:"🔗", desc:"Liens sponsorisés intégrés naturellement"},
 ];
 
@@ -51,7 +52,7 @@ INTERDIT: contenu générique, titres sur-optimisés, phrases artificielles.`,
 
   article_simple_referenseo: `TYPE: article simple ReferenSEO
 OBJECTIF: Article SEO d'expert solo. Utile, tranché, basé sur l'expérience terrain. Ranker sur requêtes informationnelles et asseoir l'autorité.
-INTERDIT ABSOLU ET NON NÉGOCIABLE: le mot "Maker", "Makers" ou "Les Makers" ne doit apparaître nulle part dans l'article — ni dans le corps, ni dans les titres, ni dans les métadonnées.
+INTERDIT ABSOLU ET NON NÉGOCIABLE: le mot "Maker", "Makers" ou "Les Makers" ne doit apparaître nulle part dans l'article - ni dans le corps, ni dans les titres, ni dans les métadonnées.
 STRUCTURE: Hook terrain → Introduction (contexte + promesse concrète) → Bloc réponse rapide → Développement en H2 actionnables → FAQ 3 questions PAA → Conclusion + CTA naturel
 RÈGLES: chaque H2 apporte une information qu'on ne trouve pas formulée ainsi ailleurs. Minimum 1 moment signature par article. Minimum 1 chiffre concret par grande section. Ton "je" assumé.
 INTERDIT: contenu générique, H2 reformulant le titre, phrases sans substance, listes à puces sans explication, ton de média neutre.
@@ -63,6 +64,43 @@ STRUCTURE: Hook (constat de réalité changeante) → Introduction (mise en tens
 RÈGLES: au moins 1 référence réglementaire précise (loi, taux, date). Au moins 1 chiffre concret par grande section. Chaque H2 correspond à une étape de décision. Ton "vous" systématique, "nous" côté rédaction.
 INTERDIT: tutoiement, "je" rédactionnel, H2 dans le désordre logique, contenu vague sans chiffres, promesses marketing, contenu mindset.
 CHECK FINAL: ancrage réglementaire présent ✓ chiffres concrets partout ✓ structure décision logique ✓ ton "vous/nous" maintenu ✓ pièges identifiés ✓ lecteur sait quoi faire après ✓`,
+
+  article_simple_ipt: `TYPE: article simple Investissement Pour Tous
+OBJECTIF: Article pédagogique sur la finance personnelle, l'épargne ou l'investissement. Utile, factuel, accessible à un particulier sans formation financière. Ancrage chiffré obligatoire.
+STRUCTURE: Hook (chiffre ou constat financier concret) → Introduction (enjeu pour le lecteur, ce qu'il va comprendre) → Bloc réponse rapide → Corps structuré (comprendre → comparer → choisir → pièges) → FAQ 3 questions PAA → Conclusion + CTA naturel
+RÈGLES: au moins 1 donnée chiffrée réelle par grande section (taux, frais, plafond, performance). Chaque H2 fait avancer vers une décision ou une compréhension. Ton "vous" systématique, "nous" côté rédaction. Expliquer tout terme financier à la première occurrence.
+INTERDIT: tutoiement, "je" rédactionnel, promesses de rendement, jargon sans explication, contenu vague, ton commercial.
+CHECK FINAL: chiffres concrets partout ✓ termes expliqués ✓ ton "vous/nous" ✓ pièges identifiés ✓ indépendance affichée ✓`,
+
+  comparatif_ipt: `TYPE: comparatif Investissement Pour Tous
+OBJECTIF: Comparatif de produits ou services financiers. Aider le lecteur à choisir la meilleure solution selon son profil. Indépendance éditoriale affichée, données à jour.
+INTERDIT: tutoiement, "je" rédactionnel, promesses de rendement, encarts "Trop occupé pour tout lire".
+
+STRUCTURE:
+1. Introduction directe: enjeu financier concret, contexte réglementaire si pertinent, critères de sélection retenus, 1 recommandation annoncée d'emblée selon profil type. 4-5 phrases.
+
+2. Bloc réponse rapide H2 - "Notre sélection en un coup d'oeil": tableau récapitulatif avec 1 ligne par produit (nom, point fort, frais/taux, pour quel profil). Format wp:table obligatoire.
+
+3. Listing détaillé: H2 numéroté "1. Nom - [positionnement en quelques mots]".
+   Structure identique par produit:
+   → Présentation: ce que c'est, pour quel profil d'épargnant/investisseur
+   → Caractéristiques clés: taux, frais, plafonds, conditions concrètes
+   → Points forts: lignes <p>✅ texte</p> - PAS de <li>
+   → Points de vigilance: lignes <p>❌ texte</p> - PAS de <li>
+   → Notre avis: 1 phrase avec recommandation de profil ("adapté si vous...")
+
+4. H2 informatif #1 - "Comment choisir [catégorie] : les critères qui comptent vraiment":
+   2-3 critères décisifs avec données chiffrées. Ce que la plupart des comparatifs n'expliquent pas.
+
+5. H2 informatif #2 - question pratique sur frais réels, fiscalité ou pièges fréquents:
+   Réponse directe, chiffrée, nuancée selon profil (horizon, montant, fiscalité).
+
+6. FAQ: 3 questions PAA concrètes, réponses 50-100 mots, ton pédagogique.
+
+7. Conclusion: recommandation par profil type (ex: débutant / investisseur confirmé / capital important). 1 paragraphe par profil. CTA naturel.
+
+RÈGLES: vouvoiement - chiffres en chiffres - ✅/❌ en <p> jamais en <li> - données à jour - H2 numérotés - tableau récap obligatoire.
+CHECK FINAL: recommandation dès l'intro ✓ tableau récap ✓ H2 numérotés ✓ chiffres concrets ✓ 2 H2 informatifs ✓ conclusion par profil ✓`,
 
   comparatif: `TYPE: comparatif
 OBJECTIF: Article comparatif à forte intention d'achat. Aider le lecteur à choisir rapidement, générer des clics affiliés.
@@ -80,59 +118,68 @@ INTERDIT: lister sans analyser, titres génériques, structures différentes, co
 CHECK FINAL: encart avant intro ✓ résumé après intro ✓ structure uniforme ✓ aide réelle au choix ✓`,
 
   comparatif_referenseo: `TYPE: comparatif ReferenSEO
-OBJECTIF: Comparatif SEO à forte valeur ajoutée. Aider le lecteur à choisir le bon outil avec un avis d'expert personnel. Générer des clics affiliés de manière naturelle.
-INTERDIT ABSOLU ET NON NÉGOCIABLE: le mot "Maker", "Makers" ou "Les Makers" ne doit apparaître nulle part dans l'article — ni dans le corps, ni dans les titres, ni dans les métadonnées.
-INTERDIT ABSOLU: les encarts "📢 Trop occupé pour tout lire" et "🕰️ Pas le temps de tout lire". Jamais. Zéro encart de ce type.
-INTERDIT: "À qui ça s'adresse", "Ce qu'on a apprécié" (trop générique).
-STRUCTURE:
-1. Introduction (pas d'encart avant): accroche directe sur le problème, contexte de la sélection, critères retenus. 3-4 phrases max.
-2. Listing des outils: chaque outil avec H3 numéroté "1. Nom — [accroche différenciante]".
-   Structure par outil: Présentation (2-3 phrases) → Fonctionnalités clés → Tarifs → Ce que j'aime (lignes <p>✅ texte</p>, PAS de <li>) → Ce que j'aime moins (lignes <p>❌ texte</p>, PAS de <li>) → Mon verdict (1 phrase tranchée)
-3. H2 informatif #1 — "Comment choisir [catégorie] : les critères qui comptent vraiment": 2-3 critères décisifs expliqués concrètement.
-4. H2 informatif #2 — question pratique (budget, gratuit vs payant, etc.): réponse directe chiffrée, nuances selon profil.
-5. FAQ: 3 questions PAA concrètes, réponses 50-100 mots, ton d'expert.
-6. Conclusion: recommandation finale selon 2-3 profils types. Pas d'encart, texte direct. CTA naturel si pertinent.
-RÈGLES: H3 numérotés 1. 2. 3. — chiffres en chiffres — ✅/❌ en <p> simples jamais en <li> — ton "je" assumé — opinion tranchée par outil.
-CHECK FINAL: pas d'encart intro ✓ H3 numérotés ✓ ✅❌ en <p> ✓ 2 H2 informatifs ✓ chiffres en chiffres ✓ avis personnel ✓`,
-
-  comparatif_referenseo: `TYPE: comparatif ReferenSEO
-OBJECTIF: Comparatif SEO à forte valeur ajoutée. Aider le lecteur à choisir le bon outil avec un avis d'expert personnel. Générer des clics affiliés de manière naturelle.
-INTERDIT ABSOLU: les encarts "📢 Trop occupé pour tout lire" et "🕰️ Pas le temps de tout lire". Jamais. Zéro encart de ce type.
-INTERDIT ABSOLU: toute mention du mot "Maker" ou "Makers".
-INTERDIT: "À qui ça s'adresse", "Ce qu'on a apprécié" (trop générique).
+OBJECTIF: Comparatif SEO à forte valeur ajoutée. Aider le lecteur à choisir rapidement le bon outil avec un avis d'expert personnel. Générer des clics affiliés naturellement.
+INTERDIT ABSOLU ET NON NÉGOCIABLE: le mot "Maker", "Makers" ou "Les Makers" nulle part - corps, titres, métadonnées.
+INTERDIT ABSOLU: encarts "📢 Trop occupé pour tout lire" et "🕰️ Pas le temps de tout lire".
+INTERDIT: "À qui ça s'adresse", "Ce qu'on a apprécié".
 
 STRUCTURE:
-1. Introduction (pas d'encart avant): accroche directe sur le problème, contexte de la sélection, critères retenus. 3-4 phrases max.
+1. Introduction directe (pas d'encart): accroche sur le problème concret du lecteur, contexte de la sélection, critères retenus, 1 recommandation claire annoncée dès le départ ("si tu veux aller vite : X"). 4-5 phrases max.
 
-2. Listing des outils (corps principal):
-Chaque outil présenté avec un H3 numéroté: "1. Nom de l'outil — [accroche différenciante en quelques mots]"
-Structure identique pour chaque outil:
-→ Présentation: 2-3 phrases, ce que c'est vraiment, pour quel usage
-→ Fonctionnalités clés: les 3-5 points qui comptent vraiment
-→ Tarifs: prix concrets, tiers si pertinent
-→ Ce que j'aime (lignes simples avec ✅, PAS de liste à puces — utiliser des paragraphes <p>✅ texte</p>)
-→ Ce que j'aime moins (lignes simples avec ❌, PAS de liste à puces — utiliser des paragraphes <p>❌ texte</p>)
-→ Mon verdict: 1 phrase d'avis personnel tranché
+2. Bloc réponse rapide H2 - "Mon choix rapide si tu n'as pas le temps": tableau récapitulatif des outils avec 1 ligne par outil (nom, point fort, prix, pour qui). Format wp:table obligatoire ici.
 
-3. Section informative H2 #1 — "Comment choisir [catégorie] : les critères qui comptent vraiment"
-Contenu: 2-3 critères décisifs expliqués avec du concret. Ce que la plupart des guides n'expliquent pas. Aide à passer du listing à la décision.
+3. Listing détaillé des outils: chaque outil avec H2 numéroté "1. Nom - [accroche différenciante]".
+   Structure identique par outil:
+   → Présentation: 2-3 phrases, ce que c'est vraiment, pour quel usage concret
+   → Fonctionnalités clés: 3-5 points qui comptent vraiment (pas la liste marketing)
+   → Tarifs: prix concrets avec tiers si pertinent
+   → Ce que j'aime: lignes <p>✅ texte</p> - PAS de <li>
+   → Ce que j'aime moins: lignes <p>❌ texte</p> - PAS de <li>
+   → Mon verdict: 1 phrase tranchée avec recommandation de profil ("idéal si tu...")
 
-4. Section informative H2 #2 — question pratique liée au sujet (ex: "Faut-il payer pour [catégorie] ou les versions gratuites suffisent ?", "Quel budget prévoir pour [catégorie] en 2026 ?")
-Contenu: réponse directe, chiffrée si possible, avec nuances selon le profil. L'objectif est de lever les derniers freins à l'achat.
+4. H2 informatif #1 - "Comment choisir [catégorie] : les critères qui comptent vraiment":
+   2-3 critères décisifs expliqués concrètement. Ce que la plupart des guides n'expliquent pas. Aide à passer du listing à la décision.
 
-5. FAQ: 3 questions PAA concrètes, réponses 50-100 mots, ton d'expert.
+5. H2 informatif #2 - question pratique levant un frein réel (budget, gratuit vs payant, faut-il vraiment payer, quelle différence concrète entre les options):
+   Réponse directe chiffrée, nuances selon profil.
 
-6. Conclusion: recommandation finale selon 2-3 profils types (ex: débutant / confirmé / budget serré). Pas d'encart, juste du texte. CTA naturel si pertinent.
+6. FAQ: 3 questions PAA concrètes, réponses 50-100 mots, ton d'expert à la première personne.
 
-RÈGLES:
-- Numéroter chaque outil dans le H3: "1.", "2.", "3."…
-- Chiffres toujours en chiffres (2026, pas "deux mille vingt-six" ; 49€, pas "quarante-neuf euros")
-- ✅/❌ en lignes <p> simples, jamais en <li>
-- Ton d'avis personnel expert, pas de contenu interchangeable
-- Structure identique pour tous les outils
-- Chaque outil doit avoir un angle clair qui le différencie des autres
+7. Conclusion: recommandation finale par profil type (ex: débutant / confirmé / budget serré). 1 paragraphe par profil. Pas d'encart. CTA naturel.
 
-CHECK FINAL: pas d'encart intro ✓ H3 numérotés ✓ ✅❌ en <p> ✓ 2 H2 informatifs après listing ✓ chiffres en chiffres ✓ avis personnel présent ✓`,
+RÈGLES: H2 numérotés pour les outils - chiffres en chiffres - ✅/❌ en <p> jamais en <li> - ton "je" assumé - opinion tranchée par outil - tableau récap en bloc 2.
+CHECK FINAL: recommandation dès l'intro ✓ tableau récap ✓ H2 numérotés ✓ ✅❌ en <p> ✓ 2 H2 informatifs ✓ conclusion par profil ✓`,
+
+  comparatif_100jours: `TYPE: comparatif 100 jours pour entreprendre
+OBJECTIF: Comparatif d'outils ou services pour dirigeants de TPE/PME. Aider à une décision rapide et éclairée. Ancrage concret sur les coûts, les obligations et les cas d'usage réels.
+INTERDIT: tutoiement, "je" rédactionnel, encarts "Trop occupé pour tout lire", promesses marketing.
+
+STRUCTURE:
+1. Introduction directe: constat de la situation du lecteur (obligation, besoin, changement réglementaire), contexte de la sélection, critères retenus, 1 recommandation annoncée d'emblée ("pour une structure de moins de 10 salariés, X est le choix le plus adapté"). 4-5 phrases.
+
+2. Bloc réponse rapide H2 - "Notre sélection en un coup d'oeil": tableau récapitulatif avec 1 ligne par outil (nom, usage principal, tarif, pour quel type de structure). Format wp:table obligatoire.
+
+3. Listing détaillé des outils: H2 numéroté "1. Nom - [positionnement en quelques mots]".
+   Structure identique par outil:
+   → Présentation: ce que c'est, pour quel type de structure, quel cas d'usage
+   → Fonctionnalités clés: ce qui compte pour un dirigeant de TPE/PME
+   → Tarifs: prix concrets, engagement, coûts cachés éventuels
+   → Points forts: lignes <p>✅ texte</p> - PAS de <li>
+   → Points de vigilance: lignes <p>❌ texte</p> - PAS de <li>
+   → Notre avis: 1 phrase avec recommandation de profil ("adapté à une structure qui...")
+
+4. H2 informatif #1 - "Comment choisir [catégorie] : les critères à vérifier absolument":
+   2-3 critères décisifs avec références concrètes (réglementaires si pertinent, chiffrées). Ce que les comparatifs génériques ne mentionnent pas.
+
+5. H2 informatif #2 - question pratique sur le coût réel ou les pièges fréquents (ex: "Quel budget prévoir réellement ?", "Les 3 erreurs fréquentes lors du choix de [catégorie]"):
+   Réponse directe, chiffrée, nuancée selon la taille de structure.
+
+6. FAQ: 3 questions PAA concrètes orientées décision, réponses 50-100 mots, ton consultatif.
+
+7. Conclusion: recommandation par profil de structure (ex: artisan solo / PME 5-20 salariés / commerce avec saisonnalité). 1 paragraphe par profil. CTA naturel.
+
+RÈGLES: vouvoiement systématique - chiffres en chiffres - ✅/❌ en <p> jamais en <li> - ancrage chiffré obligatoire - tableau récap en bloc 2 - H2 numérotés pour les outils.
+CHECK FINAL: recommandation dès l'intro ✓ tableau récap ✓ H2 numérotés ✓ ancrage chiffré ✓ 2 H2 informatifs ✓ conclusion par profil ✓`,
 
   liste: `TYPE: liste / top X
 OBJECTIF: Article top X avec sélection qualitative. Informer, proposer sélection utile, générer clics naturellement.
@@ -215,19 +262,19 @@ CHECK FINAL: lien présent ✓ bonne ancre ✓ bon emplacement ✓ intégration 
 const AUDIENCE = "Personnes qui souhaitent se lancer dans le business en ligne, ou qui sont dans les premières années de leur aventure entrepreneuriale.";
 const CTA_DEFAULT = "s'abonner à la newsletter des Makers (lancer et développer son business en ligne)";
 const TON_DEFAULT = "Enthousiaste et inspirant. Tutoyer le lecteur. On n'utilise pas le 'je' mais le 'nous' et le 'on'.";
-const SIGNATURE_DEFAULT = `SIGNATURE ÉDITORIALE LES MAKERS — NON NÉGOCIABLE
+const SIGNATURE_DEFAULT = `SIGNATURE ÉDITORIALE LES MAKERS - NON NÉGOCIABLE
 Voix directe, lucide, orientée business. Pas neutre. Pas académique. Écrit par quelqu'un qui pratique.
 HOOK VÉRITÉ (1ère phrase): casse une croyance. INTERDIT: "Dans cet article", "Bienvenue".
 MOMENTS SIGNATURE (2-4/article): Vérité terrain | Erreur fréquente | Insight business | Test terrain.
 PUNCHLINES: 1 par H2 minimum. CTA: bénéfice concret AVANT l'action.
 RÈGLES: phrases courtes, concret > théorie, 1 idée/paragraphe. INTERDIT: phrases molles, jargon, ton neutre.`;
 
-const SIGNATURE_REFERENSEO = `SIGNATURE ÉDITORIALE REFERENSEO — NON NÉGOCIABLE
-Voix de Matthieu Verne, expert solo, 25 ans de terrain. Tutoiement systématique et assumé. "Je" rédactionnel partout — jamais "nous", jamais "on" au sens collectif. Le lecteur c'est "tu", "ton", "tes".
+const SIGNATURE_REFERENSEO = `SIGNATURE ÉDITORIALE REFERENSEO - NON NÉGOCIABLE
+Voix de Matthieu Verne, expert solo, 25 ans de terrain. Tutoiement systématique et assumé. "Je" rédactionnel partout - jamais "nous", jamais "on" au sens collectif. Le lecteur c'est "tu", "ton", "tes".
 HOOK (1ère phrase): assertion forte à la première personne, ou promesse de soulagement immédiat. INTERDIT: "Dans cet article", "Bienvenue", intro factuelle neutre.
-MOMENTS SIGNATURE (2-3/article — choisir parmi):
-- Opinion directe non édulcorée: "X s'impose clairement comme le meilleur choix", "j'ai une préférence personnelle pour Y — voici pourquoi"
-- Test vécu: "j'ai testé [outil/méthode] — voici ce que ca donne vraiment"
+MOMENTS SIGNATURE (2-3/article - choisir parmi):
+- Opinion directe non édulcorée: "X s'impose clairement comme le meilleur choix", "j'ai une préférence personnelle pour Y - voici pourquoi"
+- Test vécu: "j'ai testé [outil/méthode] - voici ce que ca donne vraiment"
 - Interpellation d'urgence douce: "Si tu n'as pas encore essayé X, il est urgent de le tester"
 - Scénarisation du bénéfice: "Imagine : [situation concrète où l'outil/méthode fonctionne pour le lecteur]"
 - Insight contre-intuitif: "Ce que la plupart des guides ne disent pas sur [sujet]"
@@ -236,11 +283,11 @@ TRILOGIE DE MARQUE: les articles s'inscrivent dans l'univers "lancer, développe
 RÈGLES: opinion assumée > neutralité de façade. Concret et actionnable. Chiffres réels. Ton mentor qui pousse à l'action.
 INTERDIT ABSOLU: "Maker", "Makers", "Les Makers". Vouvoiement. "Nous", "notre", "on" au sens collectif. Ton neutre. Phrases molles. Jargon anglicisé. "Il est important de", "n'hésitez pas à", "en termes de".`;
 
-const SIGNATURE_100JOURS = `SIGNATURE ÉDITORIALE 100 JOURS POUR ENTREPRENDRE — NON NÉGOCIABLE
+const SIGNATURE_100JOURS = `SIGNATURE ÉDITORIALE 100 JOURS POUR ENTREPRENDRE - NON NÉGOCIABLE
 Voix d'équipe experte, consultatif et bienveillant. On s'adresse à des dirigeants de TPE/PME (35-55 ans) qui ont besoin de traduire des obligations réglementaires en actions concrètes. Jamais de tutoiement. Toujours "vous", "votre", "vos". Côté rédaction : "nous".
 HOOK (1ère phrase): constat de réalité changeante qui nomme exactement la situation du lecteur. INTERDIT: "Dans cet article", "Bienvenue", storytelling personnel, anecdote.
 STRUCTURE TYPE INVARIABLE: obligation/contexte → définitions des cas → options disponibles → coûts concrets → étapes → pièges → conclusion synthèse.
-MOMENTS SIGNATURE (2-3/article — choisir parmi):
+MOMENTS SIGNATURE (2-3/article - choisir parmi):
 - Mise en garde concrète: "Attention cependant : sans [action précise], [conséquence réglementaire]"
 - Ancrage chiffré: référence à une loi précise, un taux officiel, une date d'application
 - Réalisme nuancé: "X ne remplacera pas Y, mais peut considérablement [bénéfice concret]"
@@ -248,6 +295,19 @@ MOMENTS SIGNATURE (2-3/article — choisir parmi):
 PUNCHLINES: 1 par H2 minimum. Phrase courte, factuelle, orientée décision.
 RÈGLES: ancrage chiffré et réglementaire obligatoire (lois, taux, dates). Chaque H2 fait avancer vers une décision. Format guide de conformité pour décideur pressé. Zéro promesse absolue, toujours nuancer.
 INTERDIT: tutoiement, "je" rédactionnel, enthousiasme marketing, "il suffit de", "c'est simple", contenu mindset/motivation, promesses irréalistes.`;
+
+const SIGNATURE_IPT = `SIGNATURE ÉDITORIALE INVESTISSEMENT POUR TOUS - NON NÉGOCIABLE
+Voix de média indépendant spécialisé finance personnelle. Pédagogique, factuel, accessible. On s'adresse à des épargnants particuliers qui veulent comprendre et choisir les meilleures solutions sans jargon. Toujours "vous", "votre", "vos". Côté rédaction : "nous".
+HOOK (1ère phrase): chiffre concret ou constat de situation financière que le lecteur reconnaît immédiatement. INTERDIT: "Dans cet article", "Bienvenue", promesses de rendement.
+STRUCTURE TYPE: contexte/enjeu → comprendre le produit → comparer les options → critères de choix → recommandation selon profil → pièges à éviter → conclusion.
+MOMENTS SIGNATURE (2-3/article - choisir parmi):
+- Ancrage chiffré: taux, frais, performance sur période réelle, plafonds réglementaires
+- Mise en garde indépendante: "Attention : ce que les publicités ne mentionnent pas sur [produit]"
+- Nuance honnête: "X est souvent présenté comme la solution idéale - en réalité, tout dépend de [critère]"
+- Orientation profil: "Si votre horizon de placement est inférieur à [durée], voici ce que nous recommandons"
+PUNCHLINES: 1 par H2 minimum. Factuelle, chiffrée si possible.
+RÈGLES: indépendance éditoriale affichée. Données à jour (frais, taux, conditions). Zéro promesse de rendement. Toujours nuancer selon le profil du lecteur.
+INTERDIT: tutoiement, "je" rédactionnel, promesses de gains, ton commercial, "il suffit de", jargon financier sans explication.`;
 
 const DEFAULT_PROFILE = {
   signature:SIGNATURE_DEFAULT, shortcodeIntro:`[elementor-template id="22062"]`,
@@ -261,34 +321,45 @@ const loadLS=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||"null")??d}c
 const saveLS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 const DEFAULT_INSTRUCTIONS={"intention":"","competitors":"","longtail":"","article":""};
 
+// ─── LINKING INTERNE ─────────────────────────────────────────────────────────
+const SHEET_URL="https://docs.google.com/spreadsheets/d/13xZYfByQEM5EYb_S3tpmJHRrLcWSeGNQwSq8ukNUFyw/edit";
+const SHEET_CSV_BASE="https://docs.google.com/spreadsheets/d/13xZYfByQEM5EYb_S3tpmJHRrLcWSeGNQwSq8ukNUFyw/gviz/tq?tqx=out:csv&sheet=";
+
 // ─── SYSTEM BASE ──────────────────────────────────────────────────────────────
 const SYSTEM_BASE=(s)=>`Tu es un expert SEO et rédacteur web francophone spécialisé pour "${s}". Nous sommes en ${CURRENT_YEAR}. Tu réponds UNIQUEMENT en JSON valide, sans backticks, sans commentaires.`;
 
 // ─── ARTICLE PROMPT BUILDER ───────────────────────────────────────────────────
 function buildArticlePrompt(s,k,site,wc,instructions,prevData,profile,articleType,linkSaleConfig){
   const cta=profile?.cta||"",ton=profile?.ton||TON_DEFAULT,sig=profile?.signature||"";
-  const ctaInstr=cta?`CTA: ${cta}`:"Pas de CTA spécifique — conclure par une invitation naturelle à agir, sans mentionner de newsletter ou produit particulier.";
+  const ctaInstr=cta?`CTA: ${cta}`:"Pas de CTA spécifique - conclure par une invitation naturelle à agir, sans mentionner de newsletter ou produit particulier.";
   const useYear=profile?.useYearVars!==false,scIntro=profile?.shortcodeIntro||"",scEnd=profile?.shortcodeConclusion||"";
   const snippetBg=profile?.snippetEnabled?(profile?.snippetBg||"#fdeecd"):null;
   const isLM=site.toLowerCase().includes("lesmakers");
   const isRef=site.toLowerCase().includes("referenseo");
   const is100j=site.toLowerCase().includes("100jours")||site.toLowerCase().includes("100 jours");
+  const isIPT=site.toLowerCase().includes("investissement-pour-tous")||site.toLowerCase().includes("investissement pour tous");
   const briefKey=isRef&&articleType==="comparatif"
     ?"comparatif_referenseo"
     :isRef&&articleType==="article_simple"
     ?"article_simple_referenseo"
+    :is100j&&articleType==="comparatif"
+    ?"comparatif_100jours"
     :is100j&&articleType==="article_simple"
     ?"article_simple_100jours"
+    :isIPT&&articleType==="comparatif"
+    ?"comparatif_ipt"
+    :isIPT&&articleType==="article_simple"
+    ?"article_simple_ipt"
     :articleType;
-  const brief=(isLM||isRef||is100j)&&briefKey?BRIEFS[briefKey]||"":"";
+  const brief=(isLM||isRef||is100j||isIPT)&&briefKey?BRIEFS[briefKey]||"":"";
   const yearNote=useYear
-    ?"⚠️ RÈGLE ANNÉE: remplacer TOUTE occurrence de l'année (2026, 2025, etc.) par le shortcode [current_date format=Y] — dans le corps, les H2, les H3, partout. Ne jamais écrire un chiffre d'année directement."
+    ?"⚠️ RÈGLE ANNÉE: remplacer TOUTE occurrence de l'année (2026, 2025, etc.) par le shortcode [current_date format=Y] - dans le corps, les H2, les H3, partout. Ne jamais écrire un chiffre d'année directement."
     :"Écrire l'année en toutes lettres si nécessaire.";
   const titleNote=useYear
-    ?"wp_title: DOIT contenir [current_date format=Y] pour l'année — ex: 'Notion vs Google Sheets : Guide [current_date format=Y]'. ⛔ NE PAS mettre de H1 dans html_content — WordPress utilise wp_title comme titre H1 automatiquement. meta_title: sans aucune mention d'année. meta_description: sans aucune mention d'année."
+    ?"wp_title: DOIT contenir [current_date format=Y] pour l'année - ex: 'Notion vs Google Sheets : Guide [current_date format=Y]'. ⛔ NE PAS mettre de H1 dans html_content - WordPress utilise wp_title comme titre H1 automatiquement. meta_title: sans aucune mention d'année. meta_description: sans aucune mention d'année."
     :"wp_title sans variable d'année. ⛔ NE PAS mettre de H1 dans html_content. meta_title et meta_description sans année.";
   const snippetInstr=snippetBg
-    ?`BLOC SNIPPET — utiliser EXACTEMENT ce bloc (ne rien changer à la structure):
+    ?`BLOC SNIPPET - utiliser EXACTEMENT ce bloc (ne rien changer à la structure):
 <!-- wp:paragraph {"backgroundColor":"","style":{"elements":{"link":{"color":{"text":"var:preset|color|contrast"}}}}} -->
 <p class="has-background" style="background-color:${snippetBg};padding:1em 1.2em;border-radius:6px"><strong>[réponse directe 40-60 mots en gras, mot-clé dans les 10 premiers mots, pas de label "Résumé"]</strong></p>
 <!-- /wp:paragraph -->`
@@ -307,15 +378,15 @@ Générer dans review_header_data: {"nom_outil":"...","note":0.0,"resume":"...",
 Ce composant sera rendu en bloc Gutenberg structuré avant l'introduction.`:"";
 
   return {
-    system:`Tu es le redacteur editorial senior de ${site}. ${CURRENT_YEAR}. ${isLM?"Voix directe, lucide, business Les Makers.":isRef?"Tu es Matthieu Verne, expert solo avec 25 ans de terrain. Tutoiement systematique. Je partout. Opinion directe assumee. INTERDIT ABSOLU: Maker, Makers, Les Makers, vouvoiement, ton neutre.":is100j?"Voix equipe experte, consultatif. Tu t'adresses a des dirigeants de TPE/PME. Vouvoiement systematique. Ancrage reglementaire et chiffre obligatoire. Jamais de tutoiement, jamais de je redactionnel.":"Voix professionnelle et claire."} 3 phases obligatoires. JSON uniquement.`,
+    system:`Tu es le redacteur editorial senior de ${site}. ${CURRENT_YEAR}. ${isLM?"Voix directe, lucide, business Les Makers.":isRef?"Tu es Matthieu Verne, expert solo avec 25 ans de terrain. Tutoiement systematique. Je partout. Opinion directe assumee. INTERDIT ABSOLU: Maker, Makers, Les Makers, vouvoiement, ton neutre.":is100j?"Voix equipe experte, consultatif. Tu t'adresses a des dirigeants de TPE/PME. Vouvoiement systematique. Ancrage reglementaire et chiffre obligatoire. Jamais de tutoiement, jamais de je redactionnel.":isIPT?"Voix media independant finance personnelle. Pedagogique, factuel, accessible. Vouvoiement systematique. Donnees chiffrees obligatoires. Independance editoriale affichee. Jamais de promesse de rendement.":"Voix professionnelle et claire."} 3 phases obligatoires. JSON uniquement.`,
     user:`Redige un article SEO de ${wc} mots sur: "${s}".
-${brief?`\n════ BRIEF OBLIGATOIRE — TYPE: ${articleType?.toUpperCase()} ════\n${brief}\n════ FIN BRIEF ════\n`:""}
+${brief?`\n════ BRIEF OBLIGATOIRE - TYPE: ${articleType?.toUpperCase()} ════\n${brief}\n════ FIN BRIEF ════\n`:""}
 CONTEXTE SEO:
 - Mot-cle principal: ${prevData?.longtail?.mot_cle_principal||k}
 - Secondaires: ${(prevData?.longtail?.mots_cles_secondaires||[]).join(", ")||k}
 - Intention: ${prevData?.longtail?.intention_dominante||"informationnelle"}
 - Angle: ${prevData?.longtail?.angle_editorial||"guide pratique"}
-- Audience: ${is100j?"Dirigeants de TPE/PME (35-55 ans), commerce/services/artisanat, confrontes a des decisions concretes : statut juridique, banque pro, logiciels, conformite reglementaire. Pas des experts du droit.":isRef?"Solopreneurs et aspirants entrepreneurs digitaux qui veulent lancer ou developper leur business en ligne. Ils cherchent des conseils actionnables de quelqu'un qui a vraiment fait.":AUDIENCE}
+- Audience: ${is100j?"Dirigeants de TPE/PME (35-55 ans), commerce/services/artisanat, confrontes a des decisions concretes : statut juridique, banque pro, logiciels, conformite reglementaire. Pas des experts du droit.":isRef?"Solopreneurs et aspirants entrepreneurs digitaux qui veulent lancer ou developper leur business en ligne. Ils cherchent des conseils actionnables de quelqu'un qui a vraiment fait.":isIPT?"Particuliers (30-60 ans) qui souhaitent epargner et investir intelligemment : ETF, PEA, assurance-vie, SCPI, comptes bancaires. Pas des experts financiers - ils veulent comprendre, comparer et choisir sans se faire avoir.":AUDIENCE}
 - Ton: ${ton}
 - ${ctaInstr}
 - Requetes: ${(prevData?.competitors?.requetes_conversationnelles||[]).slice(0,8).join(" / ")}
@@ -325,11 +396,12 @@ ${reviewInstr}
 ${sig&&isLM?`\n════ SIGNATURE EDITORIALE LM ════\n${sig}\n════`:""}
 ${isRef?`\n════ SIGNATURE EDITORIALE REFERENSEO ════\n${SIGNATURE_REFERENSEO}\n════`:""}
 ${is100j?`\n════ SIGNATURE EDITORIALE 100 JOURS ════\n${SIGNATURE_100JOURS}\n════`:""}
+${isIPT?`\n════ SIGNATURE EDITORIALE INVESTISSEMENT POUR TOUS ════\n${SIGNATURE_IPT}\n════`:""}
 
-PHASE 1 — PRÉPARATION:
+PHASE 1 - PRÉPARATION:
 mot_cle_principal_final, mots_cles_secondaires_final (5), intention_finale, angle_final, promesse_article, hook_verite${articleType==="review"?", review_header_data":""}
 
-PHASE 2 — RÉDACTION GUTENBERG:
+PHASE 2 - RÉDACTION GUTENBERG:
 Blocs: § = <!-- wp:paragraph --><p>x</p><!-- /wp:paragraph --> | H2 = <!-- wp:heading {"level":2} --><h2>x</h2><!-- /wp:heading --> | H3 = <!-- wp:heading {"level":3} --><h3>x</h3><!-- /wp:heading --> | liste = <!-- wp:list --><ul><!-- wp:list-item --><li>x</li><!-- /wp:list-item --></ul><!-- /wp:list --> | punchline = <!-- wp:quote --><blockquote class="wp-block-quote"><p>x</p></blockquote><!-- /wp:quote --> | shortcode = <!-- wp:shortcode -->[x]<!-- /wp:shortcode -->
 MÉTADONNÉES: ${titleNote} meta_description: 130-160 car, sans année.
 
@@ -339,10 +411,16 @@ ORDRE OBLIGATOIRE DU CONTENU (respecter strictement cette séquence):
 ⚠️ Le bloc [1] SNIPPET doit impérativement apparaître AVANT le bloc [2] INTRO dans html_content. JAMAIS après.
 [3] CORPS: ${isLM?"H2 humains avec verbe, punchline/section, 2-4 moments signature, 1 stat concrète.":"H2 naturels, exemples concrets."} Paragraphes 3-4 lignes. Transitions fluides. ${yearNote}
 LISTES AVANTAGES/INCONVENIENTS: quand une section presente des avantages ou inconvenients:
-${isRef
-  ?"ReferenSEO: utiliser des paragraphes simples, PAS de liste a puces. Format: <!-- wp:paragraph --><p>✅ Blabla</p><!-- /wp:paragraph --> et <!-- wp:paragraph --><p>❌ Blabla</p><!-- /wp:paragraph -->"
+${isRef||is100j||isIPT
+  ?"Utiliser des paragraphes simples, PAS de liste a puces. Format: <!-- wp:paragraph --><p>✅ Blabla</p><!-- /wp:paragraph --> et <!-- wp:paragraph --><p>❌ Blabla</p><!-- /wp:paragraph -->"
   :"Avantages → chaque item: <!-- wp:list-item --><li>✅ Blabla</li><!-- /wp:list-item --> | Inconvenients → <!-- wp:list-item --><li>❌ Blabla</li><!-- /wp:list-item -->"}
 CHIFFRES: toujours en chiffres (2026 pas "deux mille vingt-six", 49€ pas "quarante-neuf euros", 3 pas "trois" sauf debut de phrase).
+TITRES (H2, H3, wp_title, meta_title): interdire le CamelCase - ecrire en minuscules apres la majuscule initiale. Ex: "Meilleur logiciel comptabilite" pas "Meilleur Logiciel Comptabilite".
+TABLEAUX: quand le contenu s'y prete (comparaison de tarifs, de fonctionnalites, de caracteristiques, recapitulatif, grille de donnees chiffrees), generer un tableau Gutenberg. Format obligatoire:
+<!-- wp:table {"hasFixedLayout":true} -->
+<figure class="wp-block-table"><table><thead><tr><th>Critere</th><th>Option A</th><th>Option B</th></tr></thead><tbody><tr><td>Donnee</td><td>Valeur A</td><td>Valeur B</td></tr></tbody></table></figure>
+<!-- /wp:table -->
+Maximum 2 tableaux par article. Ne pas forcer un tableau si les donnees ne s'y pretent pas naturellement.
 [4] FAQ: 3 questions PAA, reponses 50-150 mots. ${useYear?"Annee dans FAQ: [current_date format=Y]":""}
 [5] CONCLUSION+CTA: ${isLM?"benefice concret AVANT l'action.":"CTA clair."} Fin: <!-- wp:shortcode -->${scEnd}<!-- /wp:shortcode -->
 RAPPEL ANNEE: ${useYear?"wp_title avec [current_date format=Y]. PAS de H1 dans html_content. Aucun chiffre d'annee dans le contenu, meta_title ou meta_description.":""}
@@ -350,7 +428,7 @@ ANTI-STUFFING: >5 mots mot-cle colle=INTERDIT.
 SEO: densite 1-1.5%, semantique 15+, entites nommees, 2-3 ancres maillage, EEAT.
 ⚠️ IMPORTANT: Le contenu doit tenir dans une seule reponse JSON. Etre concis et percutant plutot que long et repetitif. Pas de remplissage.
 
-PHASE 3 — AUTO-CORRECTION: phrases SEO artificielles? generique IA? H2 actionnable? hook tension? ${isLM?"moments signature (min 2)?":""} ${isRef?"moment signature present? ton 'je' et tutoiement maintenus partout? opinion directe assumee? aucune occurrence de 'Maker'/'Makers'? aucune phrase interchangeable?":""} ${is100j?"ton 'vous/nous' maintenu partout? ancrage reglementaire ou chiffre present? structure decision logique? pieges identifies? zero contenu vague sans chiffres?":""} CTA oriente resultat?
+PHASE 3 - AUTO-CORRECTION: phrases SEO artificielles? generique IA? H2 actionnable? hook tension? ${isLM?"moments signature (min 2)?":""} ${isRef?"moment signature present? ton 'je' et tutoiement maintenus partout? opinion directe assumee? aucune occurrence de 'Maker'/'Makers'? aucune phrase interchangeable?":""} ${is100j?"ton 'vous/nous' maintenu partout? ancrage reglementaire ou chiffre present? structure decision logique? pieges identifies? zero contenu vague sans chiffres?":""} ${isIPT?"ton 'vous/nous' maintenu? donnees chiffrees presentes? termes financiers expliques? independance editoriale respectee? zero promesse de rendement?":""} CTA oriente resultat?
 
 JSON: {"mot_cle_principal_final":"...","mots_cles_secondaires_final":["..."],"angle_final":"...","promesse_article":"...","hook_verite":"...","meta_title":"...","meta_description":"...","wp_title":"...","html_content":"...","word_count":0,"reading_time_minutes":0,"seo_score_estimate":0,"champ_semantique":["..."],"ancres_maillage":[{"ancre":"...","sujet_cible":"..."}],"excerpt":"...","moments_signature_utilises":["..."],"auto_correction_log":["..."]${articleType==="review"?`,"review_header_data":{"nom_outil":"...","note":0,"resume":"...","lien_affilie":"...","logo_url":"..."}`:""}}`
   };
@@ -374,7 +452,7 @@ function buildReviewHeaderBlock(data){
 <!-- wp:column {"width":"80%"} -->
 <div class="wp-block-column" style="flex-basis:80%">
 <!-- wp:heading {"level":3} --><h3><strong>Notre avis sur ${data.nom_outil}</strong></h3><!-- /wp:heading -->
-<!-- wp:paragraph --><p><strong>Note :</strong> ${data.note}/5 — ${stars}</p><!-- /wp:paragraph -->
+<!-- wp:paragraph --><p><strong>Note :</strong> ${data.note}/5 - ${stars}</p><!-- /wp:paragraph -->
 <!-- wp:paragraph --><p>${data.resume}</p><!-- /wp:paragraph -->
 <!-- wp:buttons -->
 <div class="wp-block-buttons"><!-- wp:button {"backgroundColor":"black","textColor":"white"} --><div class="wp-block-button"><a class="wp-block-button__link has-white-color has-black-background-color has-text-color has-background" href="${data.lien_affilie||"#"}">Essayer ${data.nom_outil} →</a></div><!-- /wp:button --></div>
@@ -403,16 +481,16 @@ async function callClaude(prompt,maxTokens=3000){
   const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:maxTokens,system:prompt.system,messages:[{role:"user",content:prompt.user}]})});
   if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`HTTP ${res.status}`);}
   const data=await res.json();if(data.error)throw new Error(data.error.message);
-  if(data.stop_reason==="max_tokens")throw new Error("Réponse tronquée (max_tokens atteint) — réduis la longueur de l'article ou réessaie");
+  if(data.stop_reason==="max_tokens")throw new Error("Réponse tronquée (max_tokens atteint) - réduis la longueur de l'article ou réessaie");
   const text=data.content?.map(b=>b.text||"").join("")||"";if(!text)throw new Error("Réponse vide");
   const clean=text.replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();
   const s=clean.indexOf("{"),e2=clean.lastIndexOf("}");
   if(s===-1||e2===-1)throw new Error("JSON introuvable dans la réponse");
   try{return JSON.parse(clean.slice(s,e2+1));}
-  catch(e){throw new Error(`JSON invalide: ${e.message} — réessaie ou réduis la longueur`);}
+  catch(e){throw new Error(`JSON invalide: ${e.message} - réessaie ou réduis la longueur`);}
 }
 
-async function generateImageGemini(subject,geminiKey,paletteColor,isReferenseo=false){
+async function generateImageGemini(subject,geminiKey,paletteColor,isReferenseo=false,is100j=false,isIPT=false){
   if(!geminiKey)throw new Error("Clé API Gemini manquante dans le profil éditorial du site");
   const colorNames={
     "#abcee3":"light sky blue (#abcee3)",
@@ -427,10 +505,28 @@ async function generateImageGemini(subject,geminiKey,paletteColor,isReferenseo=f
   const prompt=isReferenseo
     ?`Create a professional blog featured image for an article about: "${subject}".
 Style: high-quality editorial photograph or realistic illustration. Sharp, modern, well-lit. NOT flat design. NOT generic stock photo of a person at a laptop.
-The image MUST visually represent the specific topic: "${subject}". Think about what concept, object, tool, chart, or scene is directly associated with this topic — and illustrate that, not a generic office scene.
+The image MUST visually represent the specific topic: "${subject}". Think about what concept, object, tool, chart, or scene is directly associated with this topic - and illustrate that, not a generic office scene.
 Examples: an article about "meilleur VPN" → a padlock or shield icon in a tech environment. "Ouvrir un compte titre" → financial charts or a brokerage interface. "Formation SEO" → a search engine results page or keyword ranking graph.
 NO text, NO letters, NO numbers, NO logo, NO watermark.
 Aspect ratio: 16:9 horizontal landscape. Professional and clean.`
+    :is100j
+    ?`Create a blog featured image in flat vector illustration style for an article about: "${subject}".
+Style: clean flat design illustration, similar to modern business infographic visuals. Simple shapes, minimal details, professional and friendly.
+Color palette MANDATORY: primary blue #1a73e8 or similar cobalt blue, accent yellow-orange #f5a623 or similar warm yellow. White or very light grey background. Maximum 3-4 colors total.
+The illustration must visually represent the specific topic: "${subject}". Show a relevant concept, object or scene directly linked to the subject using simple flat shapes - no generic office scenes.
+Examples: "logiciel de facturation" → a stylized invoice or screen with numbers. "ouvrir une SAS" → a simple document with a stamp or signature icon. "banque pro" → a stylized card or safe icon.
+Optional: include a simple stylized human figure if it adds context, flat style only.
+NO photorealism, NO gradients, NO shadows, NO text, NO letters, NO logo, NO watermark, NO 3D effects.
+Aspect ratio: 16:9 horizontal landscape. Clean, simple, recognizable.`
+    :isIPT
+    ?`Create a blog featured image in flat vector illustration style for an article about: "${subject}".
+Style: clean flat design illustration for a finance and investment media. Simple shapes, minimal details, professional and trustworthy.
+Color palette MANDATORY: primary dark blue #1a2e4a or navy blue, accent green #27ae60 or emerald green, white background. Maximum 3-4 colors total.
+The illustration must visually represent the specific financial topic: "${subject}". Show a relevant concept directly linked to the subject using simple flat shapes.
+Examples: "meilleur PEA" → a stylized growth chart or portfolio icon. "assurance-vie" → a shield with a house or coin. "ETF" → a bar chart with upward trend. "compte courant" → a stylized bank card or account screen.
+Optional: include simple flat icons or a stylized human figure if it adds context.
+NO photorealism, NO gradients, NO shadows, NO text, NO letters, NO logo, NO watermark, NO 3D effects.
+Aspect ratio: 16:9 horizontal landscape. Clean, simple, trustworthy.`
     :`Create a minimalist flat illustration for a blog article about: "${subject}".
 MANDATORY background color: ${colorDesc}. The ENTIRE background must be filled with this exact color. No other background color is allowed.
 Main subject: centered, simple, flat style, occupying about 65% of the image.
@@ -456,7 +552,7 @@ Aspect ratio: 16:9 horizontal landscape. Clean and sharp.`;
   if(!imgPart?.inlineData?.data){
     const reason=data.candidates?.[0]?.finishReason||"unknown";
     const safety=data.candidates?.[0]?.safetyRatings?.map(r=>`${r.category}:${r.probability}`).join(",")||"";
-    throw new Error(`Gemini n'a pas retourné d'image — finishReason: ${reason}${safety?" | safety: "+safety:""}`);
+    throw new Error(`Gemini n'a pas retourné d'image - finishReason: ${reason}${safety?" | safety: "+safety:""}`);
   }
   return{base64:imgPart.inlineData.data,mimeType:imgPart.inlineData.mimeType||"image/png"};
 }
@@ -733,6 +829,190 @@ function LinkSaleConfig({config,onChange}){
   );
 }
 
+// ─── LINKING TAB ──────────────────────────────────────────────────────────────
+function LinkingTab({activeSite}){
+  const [linkSubject,setLinkSubject]=useState("");
+  const [linkKeyword,setLinkKeyword]=useState("");
+  const [linkResults,setLinkResults]=useState([]);
+  const [linkStatus,setLinkStatus]=useState("idle");
+  const [linkError,setLinkError]=useState("");
+  const [sheetData,setSheetData]=useState(null);
+  const [copied,setCopied]=useState(null);
+
+  const isReferenseo=activeSite?.name?.toLowerCase().includes("referenseo")||activeSite?.wpUrl?.toLowerCase().includes("referenseo");
+  const isLesmakers=activeSite?.name?.toLowerCase().includes("lesmakers")||activeSite?.wpUrl?.toLowerCase().includes("lesmakers");
+  const is100jours=activeSite?.name?.toLowerCase().includes("100jours")||activeSite?.name?.toLowerCase().includes("100 jours");
+
+  const getSheetTab=()=>{
+    if(isReferenseo)return "ReferenSEO";
+    if(isLesmakers)return "LesMakers";
+    if(is100jours)return "100Jours";
+    return "LesMakers";
+  };
+
+  async function loadSheetData(){
+    const tab=getSheetTab();
+    const url=`${SHEET_CSV_BASE}${encodeURIComponent(tab)}`;
+    const res=await fetch(url);
+    if(!res.ok)throw new Error(`Erreur chargement Sheet (HTTP ${res.status}) - verifie que le Sheet est partage en lecture publique`);
+    const text=await res.text();
+    const lines=text.trim().split("\n");
+    if(lines.length<2)throw new Error("Sheet vide ou inaccessible");
+    const headers=lines[0].split(",").map(h=>h.replace(/"/g,"").trim().toLowerCase());
+    const rows=lines.slice(1).map(line=>{
+      const cols=[];let current="";let inQuote=false;
+      for(let i=0;i<line.length;i++){
+        const ch=line[i];
+        if(ch==='"'){inQuote=!inQuote;}
+        else if(ch===","&&!inQuote){cols.push(current.trim());current="";}
+        else{current+=ch;}
+      }
+      cols.push(current.trim());
+      const row={};
+      headers.forEach((h,i)=>{row[h]=(cols[i]||"").replace(/^"|"$/g,"");});
+      return row;
+    }).filter(r=>(r.url||"").startsWith("http"));
+    return rows;
+  }
+
+  function scoreArticle(article,subject,keyword){
+    const normalize=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+    const subjectWords=normalize(subject).split(/\s+/).filter(w=>w.length>3);
+    const kwWords=normalize(keyword).split(/\s+/).filter(w=>w.length>3);
+    const allWords=[...new Set([...subjectWords,...kwWords])];
+    const titleField=article["titre de l'article"]||article.titre||article["title"]||"";
+    const kwField=article["mot-cle vise"]||article["mot-cle"]||article["mot-cle vise"]||article["mot cle"]||article.keyword||"";
+    const catField=article.categorie||article["categorie"]||"";
+    const haystack=normalize(`${titleField} ${kwField} ${catField}`);
+    let score=0;
+    allWords.forEach(word=>{if(haystack.includes(word))score+=2;});
+    if(haystack.includes(normalize(keyword)))score+=3;
+    if(haystack.includes(normalize(subject.split(" ").slice(0,3).join(" "))))score+=2;
+    return score;
+  }
+
+  async function handleSearch(){
+    if(!linkSubject.trim()||!linkKeyword.trim())return;
+    setLinkStatus("loading");setLinkError("");setLinkResults([]);
+    try{
+      let data=sheetData;
+      if(!data){data=await loadSheetData();setSheetData(data);}
+      const scored=data
+        .map(row=>({...row,_score:scoreArticle(row,linkSubject,linkKeyword)}))
+        .filter(r=>r._score>0)
+        .sort((a,b)=>b._score-a._score)
+        .slice(0,10);
+      setLinkResults(scored);
+      setLinkStatus("done");
+    }catch(e){setLinkError(e.message);setLinkStatus("error");}
+  }
+
+  function copyItem(idx,title,url){
+    navigator.clipboard.writeText(`${title}\n${url}`);
+    setCopied(idx);setTimeout(()=>setCopied(null),1500);
+  }
+
+  function copyAll(){
+    const text=linkResults.map(r=>{
+      const title=r["titre de l'article"]||r.titre||r.url;
+      return `${title}\n${r.url}`;
+    }).join("\n\n");
+    navigator.clipboard.writeText(text);
+    setCopied("all");setTimeout(()=>setCopied(null),1500);
+  }
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
+      <div style={{display:"flex",justifyContent:"flex-end"}}>
+        <a href={SHEET_URL} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 14px",background:C.card,border:`1.5px solid ${C.border}`,borderRadius:C.radiusSm,fontSize:12,fontWeight:600,color:C.textMuted,textDecoration:"none",boxShadow:C.shadow}}>
+          📊 Ouvrir le calendrier editorial ↗
+        </a>
+      </div>
+      <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:C.radiusLg,padding:"1.5rem",boxShadow:C.shadow}}>
+        <div style={{marginBottom:"1rem"}}>
+          <h3 style={{margin:"0 0 4px",fontSize:15,fontWeight:700,color:C.text}}>Suggestions de linking interne</h3>
+          <p style={{margin:0,fontSize:12,color:C.textMuted}}>
+            Entre le sujet de ton nouvel article - je cherche les articles existants les plus pertinents a lier.
+            {activeSite&&<span style={{marginLeft:6,background:C.yellowLight,color:C.yellowDark,padding:"1px 7px",borderRadius:99,fontSize:11,fontWeight:600}}>{activeSite.name}</span>}
+          </p>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+          <Inp label="Sujet de l'article" value={linkSubject} onChange={e=>setLinkSubject(e.target.value)} placeholder="ex: Comment creer un business en ligne"/>
+          <Inp label="Mot-cle principal" value={linkKeyword} onChange={e=>setLinkKeyword(e.target.value)} placeholder="ex: business en ligne"/>
+        </div>
+        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+          <Btn variant="primary" onClick={handleSearch} disabled={!linkSubject.trim()||!linkKeyword.trim()||linkStatus==="loading"} style={{height:40,fontSize:13,padding:"0 20px"}}>
+            {linkStatus==="loading"?<><Spinner/> Recherche...</>:"🔍 Trouver des liens pertinents"}
+          </Btn>
+          {linkStatus==="done"&&linkResults.length>0&&(
+            <Btn variant="outline" onClick={copyAll} style={{height:40,fontSize:12}}>
+              {copied==="all"?"✓ Copie !":"⎘ Copier tout"}
+            </Btn>
+          )}
+          {sheetData&&(
+            <span style={{fontSize:11,color:C.textFaint,marginLeft:2}}>
+              {sheetData.length} articles indexes ·{" "}
+              <button onClick={()=>{setSheetData(null);setLinkResults([]);setLinkStatus("idle");}} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:C.textFaint,textDecoration:"underline",padding:0,fontFamily:"inherit"}}>
+                Rafraichir
+              </button>
+            </span>
+          )}
+        </div>
+      </div>
+      {linkStatus==="error"&&(
+        <div style={{background:C.redLight,border:`1px solid #FECACA`,borderRadius:C.radius,padding:"12px 16px"}}>
+          <p style={{margin:0,fontSize:13,color:C.red,fontWeight:600}}>⚠ {linkError}</p>
+          <p style={{margin:"4px 0 0",fontSize:11,color:C.red}}>Verifie que le Google Sheet est partage en lecture publique : Partager → "Tout le monde avec le lien" → Lecteur.</p>
+        </div>
+      )}
+      {linkStatus==="done"&&(
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {linkResults.length===0?(
+            <div style={{textAlign:"center",padding:"2.5rem 1rem",background:C.card,border:`1px dashed ${C.border}`,borderRadius:C.radiusLg}}>
+              <p style={{fontSize:28,marginBottom:6}}>🔍</p>
+              <p style={{margin:0,fontSize:14,fontWeight:600,color:C.text}}>Aucun article pertinent trouve</p>
+              <p style={{margin:"4px 0 0",fontSize:12,color:C.textMuted}}>Essaie avec des mots-cles plus generaux, ou complete d'abord le calendrier editorial.</p>
+            </div>
+          ):(
+            <>
+              <p style={{margin:"0 0 4px",fontSize:12,fontWeight:600,color:C.textMuted}}>
+                {linkResults.length} article{linkResults.length>1?"s":""} suggere{linkResults.length>1?"s":""} pour le maillage
+              </p>
+              {linkResults.map((r,i)=>{
+                const title=r["titre de l'article"]||r.titre||r.url;
+                const kw=r["mot-cle vise"]||r["mot-cle"]||r.keyword||"";
+                const cat=r.categorie||r["categorie"]||"";
+                const date=r["date publication / maj"]||r["date publication"]||r.date||"";
+                const url=r.url||"";
+                return(
+                  <div key={i} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"12px 16px",background:C.card,border:`1px solid ${C.border}`,borderRadius:C.radius,boxShadow:C.shadow}}
+                    onMouseEnter={e=>e.currentTarget.style.borderColor=C.yellow+"88"}
+                    onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+                    <div style={{width:28,height:28,borderRadius:C.radiusSm,background:C.yellowLight,border:`1.5px solid ${C.yellow}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:C.yellowDark,flexShrink:0}}>{i+1}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <p style={{margin:"0 0 4px",fontSize:13,fontWeight:700,color:C.text,lineHeight:1.3}}>{title}</p>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:5}}>
+                        {kw&&<span style={{fontSize:10,padding:"1px 7px",background:C.bg,border:`1px solid ${C.border}`,borderRadius:99,color:C.textMuted,fontWeight:500}}>🔑 {kw}</span>}
+                        {cat&&<span style={{fontSize:10,padding:"1px 7px",background:C.bg,border:`1px solid ${C.border}`,borderRadius:99,color:C.textMuted,fontWeight:500}}>📁 {cat}</span>}
+                        {date&&<span style={{fontSize:10,padding:"1px 7px",background:C.bg,border:`1px solid ${C.border}`,borderRadius:99,color:C.textFaint,fontWeight:500}}>📅 {date}</span>}
+                      </div>
+                      <a href={url} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:C.blue,textDecoration:"none",fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"block",maxWidth:"100%"}}>{url}</a>
+                    </div>
+                    <button onClick={()=>copyItem(i,title,url)} title="Copier titre + URL"
+                      style={{width:32,height:32,borderRadius:C.radiusSm,border:`1.5px solid ${C.border}`,background:copied===i?C.greenLight:C.bg,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.2s",color:copied===i?C.green:C.textMuted}}>
+                      {copied===i?"✓":"⎘"}
+                    </button>
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 const PIPELINE_STEPS=[
   {id:"intention",  label:"Intention & Conversion",icon:"🎯",desc:"Décryptage intention + angles CTA"},
@@ -782,7 +1062,7 @@ export default function App(){
         q=q.map(item=>item.siteId?item:{...item,siteId:s[0].name});
         saveLS(QUEUE_KEY,q);
       } else {
-        // Multiple sites: drop orphan items to avoid mixing — user will re-add them
+        // Multiple sites: drop orphan items to avoid mixing - user will re-add them
         q=q.filter(item=>item.siteId);
         saveLS(QUEUE_KEY,q);
       }
@@ -836,11 +1116,13 @@ export default function App(){
           setStatus("image","running");
           try{
             const isReferenseo=freshSite?.name?.toLowerCase().includes("referenseo")||freshSite?.wpUrl?.toLowerCase().includes("referenseo");
+            const is100jSite=freshSite?.name?.toLowerCase().includes("100jours")||freshSite?.wpUrl?.toLowerCase().includes("100jours");
+            const isIPTSite=freshSite?.name?.toLowerCase().includes("investissement-pour-tous")||freshSite?.wpUrl?.toLowerCase().includes("investissement-pour-tous");
             const paletteColor=isReferenseo
               ?REFERENSEO_COLOR
               :IMAGE_PALETTE[paletteIdxRef.current%IMAGE_PALETTE.length];
             if(!isReferenseo)paletteIdxRef.current++;
-            const{base64,mimeType}=await generateImageGemini(subj,profile.geminiKey,paletteColor,isReferenseo);
+            const{base64,mimeType}=await generateImageGemini(subj,profile.geminiKey,paletteColor,isReferenseo,is100jSite,isIPTSite);
             setImagePreview(`data:${mimeType};base64,${base64}`);
             acc.imageBase64=base64;acc.imageMimeType=mimeType;acc.imagePaletteColor=paletteColor;
             setResults(prev=>({...prev,image:{base64,mimeType,paletteColor}}));
@@ -848,7 +1130,7 @@ export default function App(){
           }catch(e){setStatus("image","error");setResults(prev=>({...prev,image:{error:e.message}}));}
         }else{
           setStatus("image","error");
-          setResults(prev=>({...prev,image:{error:"Clé Gemini manquante — va dans ⚙ Sites → ✎ → onglet Image & Gemini"}}));
+          setResults(prev=>({...prev,image:{error:"Clé Gemini manquante - va dans ⚙ Sites → ✎ → onglet Image & Gemini"}}));
         }
       }
 
@@ -897,7 +1179,7 @@ export default function App(){
         const itemId=execQueueRef.current[0];
         const item=queue.find(q=>q.id===itemId)||loadLS(QUEUE_KEY,[]).find(q=>q.id===itemId);
         if(!item){execQueueRef.current.shift();continue;}
-        // Read fresh site from localStorage — avoids stale React state in async context
+        // Read fresh site from localStorage - avoids stale React state in async context
         const freshSites=loadLS(SITES_KEY,[]);
         const site=freshSites.find(s=>s.name===item.siteId)||freshSites[0];
         if(!site){execQueueRef.current.shift();continue;}
@@ -995,7 +1277,7 @@ export default function App(){
       {/* NAV */}
       <div style={{background:C.card,borderBottom:`1px solid ${C.border}`}}>
         <div style={{maxWidth:860,margin:"0 auto",padding:"0 1.5rem",display:"flex",gap:0}}>
-          {[{id:"pipeline",label:"✍️ Générer un article"},{id:"queue",label:"📅 Calendrier éditorial",count:pendingCount}].map(t=>(
+          {[{id:"pipeline",label:"✍️ Générer un article"},{id:"queue",label:"📅 Calendrier éditorial",count:pendingCount},{id:"linking",label:"🔗 Linking interne"}].map(t=>(
             <button key={t.id} style={navStyle(t.id)} onClick={()=>setTab(t.id)}>
               {t.label}
               {t.count>0&&<span style={{background:C.yellow,color:C.text,borderRadius:99,padding:"1px 7px",fontSize:10,fontWeight:700}}>{t.count}</span>}
@@ -1253,7 +1535,7 @@ export default function App(){
             {activeSite&&(
               <>
                 <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:C.radiusLg,padding:"1.25rem 1.5rem",boxShadow:C.shadow}}>
-                  <p style={{margin:"0 0 1rem",fontSize:14,fontWeight:700,color:C.text}}>{editingQIdx!==null?"Modifier":"Planifier un article"} <span style={{fontSize:12,fontWeight:400,color:C.textMuted}}>— {activeSite.name}</span></p>
+                  <p style={{margin:"0 0 1rem",fontSize:14,fontWeight:700,color:C.text}}>{editingQIdx!==null?"Modifier":"Planifier un article"} <span style={{fontSize:12,fontWeight:400,color:C.textMuted}}>- {activeSite.name}</span></p>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
                     <div style={{gridColumn:"1/-1"}}><Inp label="Sujet" value={qForm.subject} onChange={e=>setQForm({...qForm,subject:e.target.value})} placeholder="ex: Comment créer un business en ligne"/></div>
                     <Inp label="Mot-clé principal" value={qForm.keyword} onChange={e=>setQForm({...qForm,keyword:e.target.value})} placeholder="ex: business en ligne"/>
@@ -1303,7 +1585,7 @@ export default function App(){
                           <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
                             <Spinner/>
                             <span style={{fontSize:12,fontWeight:600,color:C.yellowDark}}>
-                              Génération en cours — {queueForSite.filter(q=>q.status==="running").map(q=>q.subject)[0]||"…"}
+                              Génération en cours - {queueForSite.filter(q=>q.status==="running").map(q=>q.subject)[0]||"…"}
                             </span>
                           </div>
                         )}
@@ -1349,7 +1631,7 @@ export default function App(){
                             </div>
                           ):(
                             <div style={{textAlign:"center",minWidth:46,background:C.bg,borderRadius:C.radiusSm,padding:"6px 8px",border:`1.5px dashed ${C.border}`,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                              <span style={{fontSize:16,color:C.textFaint}}>—</span>
+                              <span style={{fontSize:16,color:C.textFaint}}>-</span>
                             </div>
                           )}
 
@@ -1376,6 +1658,12 @@ export default function App(){
             )}
           </div>
         )}
+
+        {/* ── LINKING TAB ── */}
+        {tab==="linking"&&(
+          <LinkingTab activeSite={activeSite}/>
+        )}
+
       </div>
     </div>
   );
