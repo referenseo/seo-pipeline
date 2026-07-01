@@ -326,7 +326,11 @@ const SHEET_URL="https://docs.google.com/spreadsheets/d/13xZYfByQEM5EYb_S3tpmJHR
 const SHEET_CSV_BASE="https://docs.google.com/spreadsheets/d/13xZYfByQEM5EYb_S3tpmJHRrLcWSeGNQwSq8ukNUFyw/gviz/tq?tqx=out:csv&sheet=";
 
 // ─── SYSTEM BASE ──────────────────────────────────────────────────────────────
-const SYSTEM_BASE=(s)=>`Tu es un expert SEO et rédacteur web francophone spécialisé pour "${s}". Nous sommes en ${CURRENT_YEAR}. Tu réponds UNIQUEMENT en JSON valide, sans backticks, sans commentaires.`;
+// CORRECTIF: règle d'échappement JSON explicite, ajoutée pour éviter les erreurs
+// de parsing type "Unexpected non-whitespace" ou "Expected ',' or '}'" causées
+// par des guillemets non échappés dans le HTML Gutenberg (attributs class="...", style="...").
+const SYSTEM_BASE=(s)=>`Tu es un expert SEO et rédacteur web francophone spécialisé pour "${s}". Nous sommes en ${CURRENT_YEAR}. Tu réponds UNIQUEMENT en JSON valide, sans backticks, sans commentaires.
+RÈGLE CRITIQUE D'ÉCHAPPEMENT JSON: chaque guillemet double " qui apparaît à l'intérieur d'une valeur de chaîne (par exemple dans du HTML avec des attributs class="..." ou style="...") DOIT être échappé en \\". Un guillemet non échappé casse tout le JSON et rend la réponse inutilisable. Relis mentalement chaque valeur avant de la produire pour vérifier que les guillemets internes sont bien échappés.`;
 
 // ─── ARTICLE PROMPT BUILDER ───────────────────────────────────────────────────
 function buildArticlePrompt(s,k,site,wc,instructions,prevData,profile,articleType,linkSaleConfig){
@@ -378,7 +382,8 @@ Générer dans review_header_data: {"nom_outil":"...","note":0.0,"resume":"...",
 Ce composant sera rendu en bloc Gutenberg structuré avant l'introduction.`:"";
 
   return {
-    system:`Tu es le redacteur editorial senior de ${site}. ${CURRENT_YEAR}. ${isLM?"Voix directe, lucide, business Les Makers.":isRef?"Tu es Matthieu Verne, expert solo avec 25 ans de terrain. Tutoiement systematique. Je partout. Opinion directe assumee. INTERDIT ABSOLU: Maker, Makers, Les Makers, vouvoiement, ton neutre.":is100j?"Voix equipe experte, consultatif. Tu t'adresses a des dirigeants de TPE/PME. Vouvoiement systematique. Ancrage reglementaire et chiffre obligatoire. Jamais de tutoiement, jamais de je redactionnel.":isIPT?"Voix media independant finance personnelle. Pedagogique, factuel, accessible. Vouvoiement systematique. Donnees chiffrees obligatoires. Independance editoriale affichee. Jamais de promesse de rendement.":"Voix professionnelle et claire."} 3 phases obligatoires. JSON uniquement.`,
+    system:`Tu es le redacteur editorial senior de ${site}. ${CURRENT_YEAR}. ${isLM?"Voix directe, lucide, business Les Makers.":isRef?"Tu es Matthieu Verne, expert solo avec 25 ans de terrain. Tutoiement systematique. Je partout. Opinion directe assumee. INTERDIT ABSOLU: Maker, Makers, Les Makers, vouvoiement, ton neutre.":is100j?"Voix equipe experte, consultatif. Tu t'adresses a des dirigeants de TPE/PME. Vouvoiement systematique. Ancrage reglementaire et chiffre obligatoire. Jamais de tutoiement, jamais de je redactionnel.":isIPT?"Voix media independant finance personnelle. Pedagogique, factuel, accessible. Vouvoiement systematique. Donnees chiffrees obligatoires. Independance editoriale affichee. Jamais de promesse de rendement.":"Voix professionnelle et claire."} 3 phases obligatoires. JSON uniquement.
+RÈGLE CRITIQUE D'ÉCHAPPEMENT JSON: html_content contient du HTML avec des attributs entre guillemets (class="...", style="...", les blocs Gutenberg <!-- wp:xxx {"key":"value"} -->). CHAQUE guillemet double à l'intérieur de la valeur JSON html_content DOIT être échappé en \\". C'est la cause la plus fréquente de JSON invalide, sois rigoureux sur ce point avant de terminer ta réponse.`,
     user:`Redige un article SEO de ${wc} mots sur: "${s}".
 ${brief?`\n════ BRIEF OBLIGATOIRE - TYPE: ${articleType?.toUpperCase()} ════\n${brief}\n════ FIN BRIEF ════\n`:""}
 CONTEXTE SEO:
@@ -404,6 +409,7 @@ mot_cle_principal_final, mots_cles_secondaires_final (5), intention_finale, angl
 PHASE 2 - RÉDACTION GUTENBERG:
 Blocs: § = <!-- wp:paragraph --><p>x</p><!-- /wp:paragraph --> | H2 = <!-- wp:heading {"level":2} --><h2>x</h2><!-- /wp:heading --> | H3 = <!-- wp:heading {"level":3} --><h3>x</h3><!-- /wp:heading --> | liste = <!-- wp:list --><ul><!-- wp:list-item --><li>x</li><!-- /wp:list-item --></ul><!-- /wp:list --> | punchline = <!-- wp:quote --><blockquote class="wp-block-quote"><p>x</p></blockquote><!-- /wp:quote --> | shortcode = <!-- wp:shortcode -->[x]<!-- /wp:shortcode -->
 GRAS: utiliser <strong>texte</strong> dans les balises HTML. INTERDIT: **texte** (markdown). Jamais de doubles astérisques.
+⚠️ RAPPEL ÉCHAPPEMENT: tous les guillemets " présents dans le HTML (class="...", style="...", attributs de blocs Gutenberg) doivent être échappés en \\" puisque html_content est une valeur JSON.
 MÉTADONNÉES: ${titleNote} meta_description: 130-160 car, sans année.
 
 ORDRE OBLIGATOIRE DU CONTENU (respecter strictement cette séquence):
@@ -429,7 +435,7 @@ ANTI-STUFFING: >5 mots mot-cle colle=INTERDIT.
 SEO: densite 1-1.5%, semantique 15+, entites nommees, 2-3 ancres maillage, EEAT.
 ⚠️ IMPORTANT: Le contenu doit tenir dans une seule reponse JSON. Etre concis et percutant plutot que long et repetitif. Pas de remplissage.
 
-PHASE 3 - AUTO-CORRECTION: phrases SEO artificielles? generique IA? H2 actionnable? hook tension? ${isLM?"moments signature (min 2)?":""} ${isRef?"moment signature present? ton 'je' et tutoiement maintenus partout? opinion directe assumee? aucune occurrence de 'Maker'/'Makers'? aucune phrase interchangeable?":""} ${is100j?"ton 'vous/nous' maintenu partout? ancrage reglementaire ou chiffre present? structure decision logique? pieges identifies? zero contenu vague sans chiffres?":""} ${isIPT?"ton 'vous/nous' maintenu? donnees chiffrees presentes? termes financiers expliques? independance editoriale respectee? zero promesse de rendement?":""} CTA oriente resultat?
+PHASE 3 - AUTO-CORRECTION: phrases SEO artificielles? generique IA? H2 actionnable? hook tension? ${isLM?"moments signature (min 2)?":""} ${isRef?"moment signature present? ton 'je' et tutoiement maintenus partout? opinion directe assumee? aucune occurrence de 'Maker'/'Makers'? aucune phrase interchangeable?":""} ${is100j?"ton 'vous/nous' maintenu partout? ancrage reglementaire ou chiffre present? structure decision logique? pieges identifies? zero contenu vague sans chiffres?":""} ${isIPT?"ton 'vous/nous' maintenu? donnees chiffrees presentes? termes financiers expliques? independance editoriale respectee? zero promesse de rendement?":""} CTA oriente resultat? TOUS les guillemets internes de html_content sont-ils bien échappés en \\" ?
 
 JSON: {"mot_cle_principal_final":"...","mots_cles_secondaires_final":["..."],"angle_final":"...","promesse_article":"...","hook_verite":"...","meta_title":"...","meta_description":"...","wp_title":"...","html_content":"...","word_count":0,"reading_time_minutes":0,"seo_score_estimate":0,"champ_semantique":["..."],"ancres_maillage":[{"ancre":"...","sujet_cible":"..."}],"excerpt":"...","moments_signature_utilises":["..."],"auto_correction_log":["..."]${articleType==="review"?`,"review_header_data":{"nom_outil":"...","note":0,"resume":"...","lien_affilie":"...","logo_url":"..."}`:""}}`
   };
@@ -478,6 +484,29 @@ JSON: {"mot_cle_principal":"...","mots_cles_secondaires":["..."],"intention_domi
 };
 
 // ─── API CALLERS ──────────────────────────────────────────────────────────────
+// CORRECTIF: extraction du JSON par comptage de profondeur d'accolades plutôt que
+// premier/dernier indexOf. Évite d'attraper du texte parasite après l'objet réel
+// et donne un message d'erreur plus clair si les accolades ne s'équilibrent pas
+// (signe d'une réponse tronquée ou d'un guillemet non échappé qui a cassé une string).
+function extractJsonObject(clean){
+  let depth=0,start=-1,inString=false,escapeNext=false;
+  for(let i=0;i<clean.length;i++){
+    const ch=clean[i];
+    if(escapeNext){escapeNext=false;continue;}
+    if(ch==="\\"){escapeNext=true;continue;}
+    if(ch==='"'){inString=!inString;continue;}
+    if(inString)continue;
+    if(ch==="{"){if(depth===0)start=i;depth++;}
+    else if(ch==="}"){
+      depth--;
+      if(depth===0&&start!==-1)return clean.slice(start,i+1);
+      if(depth<0)throw new Error("Accolade fermante en trop - JSON malformé");
+    }
+  }
+  if(start===-1)throw new Error("JSON introuvable dans la réponse");
+  throw new Error("JSON incomplet - la réponse a probablement été tronquée (max_tokens) ou contient un guillemet non échappé qui a désynchronisé le comptage");
+}
+
 async function callClaude(prompt,maxTokens=3000){
   const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:maxTokens,system:prompt.system,messages:[{role:"user",content:prompt.user}]})});
   if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`HTTP ${res.status}`);}
@@ -485,9 +514,8 @@ async function callClaude(prompt,maxTokens=3000){
   if(data.stop_reason==="max_tokens")throw new Error("Réponse tronquée (max_tokens atteint) - réduis la longueur de l'article ou réessaie");
   const text=data.content?.map(b=>b.text||"").join("")||"";if(!text)throw new Error("Réponse vide");
   const clean=text.replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();
-  const s=clean.indexOf("{"),e2=clean.lastIndexOf("}");
-  if(s===-1||e2===-1)throw new Error("JSON introuvable dans la réponse");
-  try{return JSON.parse(clean.slice(s,e2+1));}
+  const jsonStr=extractJsonObject(clean);
+  try{return JSON.parse(jsonStr);}
   catch(e){throw new Error(`JSON invalide: ${e.message} - réessaie ou réduis la longueur`);}
 }
 
@@ -1091,10 +1119,13 @@ export default function App(){
     const freshSite=freshSites.find(s=>s.name===site?.name||s.wpUrl===site?.wpUrl)||freshSites[0]||site;
     const profile=freshSite?.editorial||DEFAULT_PROFILE;
     console.log("[Pipeline] Site:",freshSite?.name,"| GeminiKey:",profile.geminiKey?"✓ présente":"✗ manquante");
+    // CORRECTIF: budgets de tokens augmentés pour éviter les troncatures (stop_reason max_tokens)
+    // qui produisaient un JSON incomplet sur "intention" (2000→3000) et "competitors" (3000→5000,
+    // ce dernier demande 10 concurrents détaillés + 30 requêtes + gaps, ce qui ne tenait pas dans 3000).
     const cfgs=[
-      {id:"intention",  tokens:2000,build:()=>PROMPTS.intention(subj,kw,siteName,wc,instructions.intention||"")},
-      {id:"competitors",tokens:3000,build:()=>PROMPTS.competitors(subj,kw,siteName,wc,instructions.competitors||"")},
-      {id:"longtail",   tokens:2500,build:()=>PROMPTS.longtail(subj,kw,siteName,wc,instructions.longtail||"")},
+      {id:"intention",  tokens:3000,build:()=>PROMPTS.intention(subj,kw,siteName,wc,instructions.intention||"")},
+      {id:"competitors",tokens:5000,build:()=>PROMPTS.competitors(subj,kw,siteName,wc,instructions.competitors||"")},
+      {id:"longtail",   tokens:3500,build:()=>PROMPTS.longtail(subj,kw,siteName,wc,instructions.longtail||"")},
       {id:"article",    tokens:24000,build:()=>buildArticlePrompt(subj,kw,siteName,wc,instructions.article||"",acc,profile,atype,lsc)},
     ];
     try{
@@ -1669,3 +1700,4 @@ export default function App(){
     </div>
   );
 }
+
