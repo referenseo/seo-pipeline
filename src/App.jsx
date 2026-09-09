@@ -400,7 +400,7 @@ JSON: {"mot_cle_principal":"...","mots_cles_secondaires":["..."],"intention_domi
 
 // ─── API CALLERS ──────────────────────────────────────────────────────────────
 async function callClaude(prompt,maxTokens=3000){
-  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:maxTokens,system:prompt.system,messages:[{role:"user",content:prompt.user}]})});
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:maxTokens,system:prompt.system,messages:[{role:"user",content:prompt.user}]})});
   if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`HTTP ${res.status}`);}
   const data=await res.json();if(data.error)throw new Error(data.error.message);
   if(data.stop_reason==="max_tokens")throw new Error("Réponse tronquée (max_tokens atteint) — réduis la longueur de l'article ou réessaie");
@@ -1380,3 +1380,4 @@ export default function App(){
     </div>
   );
 }
+
