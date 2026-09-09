@@ -51,7 +51,7 @@ INTERDIT: contenu générique, titres sur-optimisés, phrases artificielles.`,
 
   article_simple_referenseo: `TYPE: article simple ReferenSEO
 OBJECTIF: Article SEO d'expert solo. Utile, tranché, basé sur l'expérience terrain. Ranker sur requêtes informationnelles et asseoir l'autorité.
-INTERDIT ABSOLU ET NON NÉGOCIABLE: le mot "Maker", "Makers" ou "Les Makers" ne doit apparaître nulle part dans l'article - ni dans le corps, ni dans les titres, ni dans les métadonnées.
+INTERDIT ABSOLU ET NON NÉGOCIABLE: le mot "Maker", "Makers" ou "Les Makers" ne doit apparaître nulle part dans l'article — ni dans le corps, ni dans les titres, ni dans les métadonnées.
 STRUCTURE: Hook terrain → Introduction (contexte + promesse concrète) → Bloc réponse rapide → Développement en H2 actionnables → FAQ 3 questions PAA → Conclusion + CTA naturel
 RÈGLES: chaque H2 apporte une information qu'on ne trouve pas formulée ainsi ailleurs. Minimum 1 moment signature par article. Minimum 1 chiffre concret par grande section. Ton "je" assumé.
 INTERDIT: contenu générique, H2 reformulant le titre, phrases sans substance, listes à puces sans explication, ton de média neutre.
@@ -81,18 +81,18 @@ CHECK FINAL: encart avant intro ✓ résumé après intro ✓ structure uniforme
 
   comparatif_referenseo: `TYPE: comparatif ReferenSEO
 OBJECTIF: Comparatif SEO à forte valeur ajoutée. Aider le lecteur à choisir le bon outil avec un avis d'expert personnel. Générer des clics affiliés de manière naturelle.
-INTERDIT ABSOLU ET NON NÉGOCIABLE: le mot "Maker", "Makers" ou "Les Makers" ne doit apparaître nulle part dans l'article - ni dans le corps, ni dans les titres, ni dans les métadonnées.
+INTERDIT ABSOLU ET NON NÉGOCIABLE: le mot "Maker", "Makers" ou "Les Makers" ne doit apparaître nulle part dans l'article — ni dans le corps, ni dans les titres, ni dans les métadonnées.
 INTERDIT ABSOLU: les encarts "📢 Trop occupé pour tout lire" et "🕰️ Pas le temps de tout lire". Jamais. Zéro encart de ce type.
 INTERDIT: "À qui ça s'adresse", "Ce qu'on a apprécié" (trop générique).
 STRUCTURE:
 1. Introduction (pas d'encart avant): accroche directe sur le problème, contexte de la sélection, critères retenus. 3-4 phrases max.
-2. Listing des outils: chaque outil avec H3 numéroté "1. Nom - [accroche différenciante]".
+2. Listing des outils: chaque outil avec H3 numéroté "1. Nom — [accroche différenciante]".
    Structure par outil: Présentation (2-3 phrases) → Fonctionnalités clés → Tarifs → Ce que j'aime (lignes <p>✅ texte</p>, PAS de <li>) → Ce que j'aime moins (lignes <p>❌ texte</p>, PAS de <li>) → Mon verdict (1 phrase tranchée)
-3. H2 informatif #1 - "Comment choisir [catégorie] : les critères qui comptent vraiment": 2-3 critères décisifs expliqués concrètement.
-4. H2 informatif #2 - question pratique (budget, gratuit vs payant, etc.): réponse directe chiffrée, nuances selon profil.
+3. H2 informatif #1 — "Comment choisir [catégorie] : les critères qui comptent vraiment": 2-3 critères décisifs expliqués concrètement.
+4. H2 informatif #2 — question pratique (budget, gratuit vs payant, etc.): réponse directe chiffrée, nuances selon profil.
 5. FAQ: 3 questions PAA concrètes, réponses 50-100 mots, ton d'expert.
 6. Conclusion: recommandation finale selon 2-3 profils types. Pas d'encart, texte direct. CTA naturel si pertinent.
-RÈGLES: H3 numérotés 1. 2. 3. - chiffres en chiffres - ✅/❌ en <p> simples jamais en <li> - ton "je" assumé - opinion tranchée par outil.
+RÈGLES: H3 numérotés 1. 2. 3. — chiffres en chiffres — ✅/❌ en <p> simples jamais en <li> — ton "je" assumé — opinion tranchée par outil.
 CHECK FINAL: pas d'encart intro ✓ H3 numérotés ✓ ✅❌ en <p> ✓ 2 H2 informatifs ✓ chiffres en chiffres ✓ avis personnel ✓`,
 
   comparatif_referenseo: `TYPE: comparatif ReferenSEO
@@ -105,19 +105,19 @@ STRUCTURE:
 1. Introduction (pas d'encart avant): accroche directe sur le problème, contexte de la sélection, critères retenus. 3-4 phrases max.
 
 2. Listing des outils (corps principal):
-Chaque outil présenté avec un H3 numéroté: "1. Nom de l'outil - [accroche différenciante en quelques mots]"
+Chaque outil présenté avec un H3 numéroté: "1. Nom de l'outil — [accroche différenciante en quelques mots]"
 Structure identique pour chaque outil:
 → Présentation: 2-3 phrases, ce que c'est vraiment, pour quel usage
 → Fonctionnalités clés: les 3-5 points qui comptent vraiment
 → Tarifs: prix concrets, tiers si pertinent
-→ Ce que j'aime (lignes simples avec ✅, PAS de liste à puces - utiliser des paragraphes <p>✅ texte</p>)
-→ Ce que j'aime moins (lignes simples avec ❌, PAS de liste à puces - utiliser des paragraphes <p>❌ texte</p>)
+→ Ce que j'aime (lignes simples avec ✅, PAS de liste à puces — utiliser des paragraphes <p>✅ texte</p>)
+→ Ce que j'aime moins (lignes simples avec ❌, PAS de liste à puces — utiliser des paragraphes <p>❌ texte</p>)
 → Mon verdict: 1 phrase d'avis personnel tranché
 
-3. Section informative H2 #1 - "Comment choisir [catégorie] : les critères qui comptent vraiment"
+3. Section informative H2 #1 — "Comment choisir [catégorie] : les critères qui comptent vraiment"
 Contenu: 2-3 critères décisifs expliqués avec du concret. Ce que la plupart des guides n'expliquent pas. Aide à passer du listing à la décision.
 
-4. Section informative H2 #2 - question pratique liée au sujet (ex: "Faut-il payer pour [catégorie] ou les versions gratuites suffisent ?", "Quel budget prévoir pour [catégorie] en 2026 ?")
+4. Section informative H2 #2 — question pratique liée au sujet (ex: "Faut-il payer pour [catégorie] ou les versions gratuites suffisent ?", "Quel budget prévoir pour [catégorie] en 2026 ?")
 Contenu: réponse directe, chiffrée si possible, avec nuances selon le profil. L'objectif est de lever les derniers freins à l'achat.
 
 5. FAQ: 3 questions PAA concrètes, réponses 50-100 mots, ton d'expert.
@@ -215,19 +215,19 @@ CHECK FINAL: lien présent ✓ bonne ancre ✓ bon emplacement ✓ intégration 
 const AUDIENCE = "Personnes qui souhaitent se lancer dans le business en ligne, ou qui sont dans les premières années de leur aventure entrepreneuriale.";
 const CTA_DEFAULT = "s'abonner à la newsletter des Makers (lancer et développer son business en ligne)";
 const TON_DEFAULT = "Enthousiaste et inspirant. Tutoyer le lecteur. On n'utilise pas le 'je' mais le 'nous' et le 'on'.";
-const SIGNATURE_DEFAULT = `SIGNATURE ÉDITORIALE LES MAKERS - NON NÉGOCIABLE
+const SIGNATURE_DEFAULT = `SIGNATURE ÉDITORIALE LES MAKERS — NON NÉGOCIABLE
 Voix directe, lucide, orientée business. Pas neutre. Pas académique. Écrit par quelqu'un qui pratique.
 HOOK VÉRITÉ (1ère phrase): casse une croyance. INTERDIT: "Dans cet article", "Bienvenue".
 MOMENTS SIGNATURE (2-4/article): Vérité terrain | Erreur fréquente | Insight business | Test terrain.
 PUNCHLINES: 1 par H2 minimum. CTA: bénéfice concret AVANT l'action.
 RÈGLES: phrases courtes, concret > théorie, 1 idée/paragraphe. INTERDIT: phrases molles, jargon, ton neutre.`;
 
-const SIGNATURE_REFERENSEO = `SIGNATURE ÉDITORIALE REFERENSEO - NON NÉGOCIABLE
-Voix de Matthieu Verne, expert solo, 25 ans de terrain. Tutoiement systématique et assumé. "Je" rédactionnel partout - jamais "nous", jamais "on" au sens collectif. Le lecteur c'est "tu", "ton", "tes".
+const SIGNATURE_REFERENSEO = `SIGNATURE ÉDITORIALE REFERENSEO — NON NÉGOCIABLE
+Voix de Matthieu Verne, expert solo, 25 ans de terrain. Tutoiement systématique et assumé. "Je" rédactionnel partout — jamais "nous", jamais "on" au sens collectif. Le lecteur c'est "tu", "ton", "tes".
 HOOK (1ère phrase): assertion forte à la première personne, ou promesse de soulagement immédiat. INTERDIT: "Dans cet article", "Bienvenue", intro factuelle neutre.
-MOMENTS SIGNATURE (2-3/article - choisir parmi):
-- Opinion directe non édulcorée: "X s'impose clairement comme le meilleur choix", "j'ai une préférence personnelle pour Y - voici pourquoi"
-- Test vécu: "j'ai testé [outil/méthode] - voici ce que ca donne vraiment"
+MOMENTS SIGNATURE (2-3/article — choisir parmi):
+- Opinion directe non édulcorée: "X s'impose clairement comme le meilleur choix", "j'ai une préférence personnelle pour Y — voici pourquoi"
+- Test vécu: "j'ai testé [outil/méthode] — voici ce que ca donne vraiment"
 - Interpellation d'urgence douce: "Si tu n'as pas encore essayé X, il est urgent de le tester"
 - Scénarisation du bénéfice: "Imagine : [situation concrète où l'outil/méthode fonctionne pour le lecteur]"
 - Insight contre-intuitif: "Ce que la plupart des guides ne disent pas sur [sujet]"
@@ -236,11 +236,11 @@ TRILOGIE DE MARQUE: les articles s'inscrivent dans l'univers "lancer, développe
 RÈGLES: opinion assumée > neutralité de façade. Concret et actionnable. Chiffres réels. Ton mentor qui pousse à l'action.
 INTERDIT ABSOLU: "Maker", "Makers", "Les Makers". Vouvoiement. "Nous", "notre", "on" au sens collectif. Ton neutre. Phrases molles. Jargon anglicisé. "Il est important de", "n'hésitez pas à", "en termes de".`;
 
-const SIGNATURE_100JOURS = `SIGNATURE ÉDITORIALE 100 JOURS POUR ENTREPRENDRE - NON NÉGOCIABLE
+const SIGNATURE_100JOURS = `SIGNATURE ÉDITORIALE 100 JOURS POUR ENTREPRENDRE — NON NÉGOCIABLE
 Voix d'équipe experte, consultatif et bienveillant. On s'adresse à des dirigeants de TPE/PME (35-55 ans) qui ont besoin de traduire des obligations réglementaires en actions concrètes. Jamais de tutoiement. Toujours "vous", "votre", "vos". Côté rédaction : "nous".
 HOOK (1ère phrase): constat de réalité changeante qui nomme exactement la situation du lecteur. INTERDIT: "Dans cet article", "Bienvenue", storytelling personnel, anecdote.
 STRUCTURE TYPE INVARIABLE: obligation/contexte → définitions des cas → options disponibles → coûts concrets → étapes → pièges → conclusion synthèse.
-MOMENTS SIGNATURE (2-3/article - choisir parmi):
+MOMENTS SIGNATURE (2-3/article — choisir parmi):
 - Mise en garde concrète: "Attention cependant : sans [action précise], [conséquence réglementaire]"
 - Ancrage chiffré: référence à une loi précise, un taux officiel, une date d'application
 - Réalisme nuancé: "X ne remplacera pas Y, mais peut considérablement [bénéfice concret]"
@@ -267,7 +267,7 @@ const SYSTEM_BASE=(s)=>`Tu es un expert SEO et rédacteur web francophone spéci
 // ─── ARTICLE PROMPT BUILDER ───────────────────────────────────────────────────
 function buildArticlePrompt(s,k,site,wc,instructions,prevData,profile,articleType,linkSaleConfig){
   const cta=profile?.cta||"",ton=profile?.ton||TON_DEFAULT,sig=profile?.signature||"";
-  const ctaInstr=cta?`CTA: ${cta}`:"Pas de CTA spécifique - conclure par une invitation naturelle à agir, sans mentionner de newsletter ou produit particulier.";
+  const ctaInstr=cta?`CTA: ${cta}`:"Pas de CTA spécifique — conclure par une invitation naturelle à agir, sans mentionner de newsletter ou produit particulier.";
   const useYear=profile?.useYearVars!==false,scIntro=profile?.shortcodeIntro||"",scEnd=profile?.shortcodeConclusion||"";
   const snippetBg=profile?.snippetEnabled?(profile?.snippetBg||"#fdeecd"):null;
   const isLM=site.toLowerCase().includes("lesmakers");
@@ -282,13 +282,13 @@ function buildArticlePrompt(s,k,site,wc,instructions,prevData,profile,articleTyp
     :articleType;
   const brief=(isLM||isRef||is100j)&&briefKey?BRIEFS[briefKey]||"":"";
   const yearNote=useYear
-    ?"⚠️ RÈGLE ANNÉE: remplacer TOUTE occurrence de l'année (2026, 2025, etc.) par le shortcode [current_date format=Y] - dans le corps, les H2, les H3, partout. Ne jamais écrire un chiffre d'année directement."
+    ?"⚠️ RÈGLE ANNÉE: remplacer TOUTE occurrence de l'année (2026, 2025, etc.) par le shortcode [current_date format=Y] — dans le corps, les H2, les H3, partout. Ne jamais écrire un chiffre d'année directement."
     :"Écrire l'année en toutes lettres si nécessaire.";
   const titleNote=useYear
-    ?"wp_title: DOIT contenir [current_date format=Y] pour l'année - ex: 'Notion vs Google Sheets : Guide [current_date format=Y]'. ⛔ NE PAS mettre de H1 dans html_content - WordPress utilise wp_title comme titre H1 automatiquement. meta_title: sans aucune mention d'année. meta_description: sans aucune mention d'année."
+    ?"wp_title: DOIT contenir [current_date format=Y] pour l'année — ex: 'Notion vs Google Sheets : Guide [current_date format=Y]'. ⛔ NE PAS mettre de H1 dans html_content — WordPress utilise wp_title comme titre H1 automatiquement. meta_title: sans aucune mention d'année. meta_description: sans aucune mention d'année."
     :"wp_title sans variable d'année. ⛔ NE PAS mettre de H1 dans html_content. meta_title et meta_description sans année.";
   const snippetInstr=snippetBg
-    ?`BLOC SNIPPET - utiliser EXACTEMENT ce bloc (ne rien changer à la structure):
+    ?`BLOC SNIPPET — utiliser EXACTEMENT ce bloc (ne rien changer à la structure):
 <!-- wp:paragraph {"backgroundColor":"","style":{"elements":{"link":{"color":{"text":"var:preset|color|contrast"}}}}} -->
 <p class="has-background" style="background-color:${snippetBg};padding:1em 1.2em;border-radius:6px"><strong>[réponse directe 40-60 mots en gras, mot-clé dans les 10 premiers mots, pas de label "Résumé"]</strong></p>
 <!-- /wp:paragraph -->`
@@ -309,7 +309,7 @@ Ce composant sera rendu en bloc Gutenberg structuré avant l'introduction.`:"";
   return {
     system:`Tu es le redacteur editorial senior de ${site}. ${CURRENT_YEAR}. ${isLM?"Voix directe, lucide, business Les Makers.":isRef?"Tu es Matthieu Verne, expert solo avec 25 ans de terrain. Tutoiement systematique. Je partout. Opinion directe assumee. INTERDIT ABSOLU: Maker, Makers, Les Makers, vouvoiement, ton neutre.":is100j?"Voix equipe experte, consultatif. Tu t'adresses a des dirigeants de TPE/PME. Vouvoiement systematique. Ancrage reglementaire et chiffre obligatoire. Jamais de tutoiement, jamais de je redactionnel.":"Voix professionnelle et claire."} 3 phases obligatoires. JSON uniquement.`,
     user:`Redige un article SEO de ${wc} mots sur: "${s}".
-${brief?`\n════ BRIEF OBLIGATOIRE - TYPE: ${articleType?.toUpperCase()} ════\n${brief}\n════ FIN BRIEF ════\n`:""}
+${brief?`\n════ BRIEF OBLIGATOIRE — TYPE: ${articleType?.toUpperCase()} ════\n${brief}\n════ FIN BRIEF ════\n`:""}
 CONTEXTE SEO:
 - Mot-cle principal: ${prevData?.longtail?.mot_cle_principal||k}
 - Secondaires: ${(prevData?.longtail?.mots_cles_secondaires||[]).join(", ")||k}
@@ -326,10 +326,10 @@ ${sig&&isLM?`\n════ SIGNATURE EDITORIALE LM ════\n${sig}\n══
 ${isRef?`\n════ SIGNATURE EDITORIALE REFERENSEO ════\n${SIGNATURE_REFERENSEO}\n════`:""}
 ${is100j?`\n════ SIGNATURE EDITORIALE 100 JOURS ════\n${SIGNATURE_100JOURS}\n════`:""}
 
-PHASE 1 - PRÉPARATION:
+PHASE 1 — PRÉPARATION:
 mot_cle_principal_final, mots_cles_secondaires_final (5), intention_finale, angle_final, promesse_article, hook_verite${articleType==="review"?", review_header_data":""}
 
-PHASE 2 - RÉDACTION GUTENBERG:
+PHASE 2 — RÉDACTION GUTENBERG:
 Blocs: § = <!-- wp:paragraph --><p>x</p><!-- /wp:paragraph --> | H2 = <!-- wp:heading {"level":2} --><h2>x</h2><!-- /wp:heading --> | H3 = <!-- wp:heading {"level":3} --><h3>x</h3><!-- /wp:heading --> | liste = <!-- wp:list --><ul><!-- wp:list-item --><li>x</li><!-- /wp:list-item --></ul><!-- /wp:list --> | punchline = <!-- wp:quote --><blockquote class="wp-block-quote"><p>x</p></blockquote><!-- /wp:quote --> | shortcode = <!-- wp:shortcode -->[x]<!-- /wp:shortcode -->
 MÉTADONNÉES: ${titleNote} meta_description: 130-160 car, sans année.
 
@@ -350,7 +350,7 @@ ANTI-STUFFING: >5 mots mot-cle colle=INTERDIT.
 SEO: densite 1-1.5%, semantique 15+, entites nommees, 2-3 ancres maillage, EEAT.
 ⚠️ IMPORTANT: Le contenu doit tenir dans une seule reponse JSON. Etre concis et percutant plutot que long et repetitif. Pas de remplissage.
 
-PHASE 3 - AUTO-CORRECTION: phrases SEO artificielles? generique IA? H2 actionnable? hook tension? ${isLM?"moments signature (min 2)?":""} ${isRef?"moment signature present? ton 'je' et tutoiement maintenus partout? opinion directe assumee? aucune occurrence de 'Maker'/'Makers'? aucune phrase interchangeable?":""} ${is100j?"ton 'vous/nous' maintenu partout? ancrage reglementaire ou chiffre present? structure decision logique? pieges identifies? zero contenu vague sans chiffres?":""} CTA oriente resultat?
+PHASE 3 — AUTO-CORRECTION: phrases SEO artificielles? generique IA? H2 actionnable? hook tension? ${isLM?"moments signature (min 2)?":""} ${isRef?"moment signature present? ton 'je' et tutoiement maintenus partout? opinion directe assumee? aucune occurrence de 'Maker'/'Makers'? aucune phrase interchangeable?":""} ${is100j?"ton 'vous/nous' maintenu partout? ancrage reglementaire ou chiffre present? structure decision logique? pieges identifies? zero contenu vague sans chiffres?":""} CTA oriente resultat?
 
 JSON: {"mot_cle_principal_final":"...","mots_cles_secondaires_final":["..."],"angle_final":"...","promesse_article":"...","hook_verite":"...","meta_title":"...","meta_description":"...","wp_title":"...","html_content":"...","word_count":0,"reading_time_minutes":0,"seo_score_estimate":0,"champ_semantique":["..."],"ancres_maillage":[{"ancre":"...","sujet_cible":"..."}],"excerpt":"...","moments_signature_utilises":["..."],"auto_correction_log":["..."]${articleType==="review"?`,"review_header_data":{"nom_outil":"...","note":0,"resume":"...","lien_affilie":"...","logo_url":"..."}`:""}}`
   };
@@ -374,7 +374,7 @@ function buildReviewHeaderBlock(data){
 <!-- wp:column {"width":"80%"} -->
 <div class="wp-block-column" style="flex-basis:80%">
 <!-- wp:heading {"level":3} --><h3><strong>Notre avis sur ${data.nom_outil}</strong></h3><!-- /wp:heading -->
-<!-- wp:paragraph --><p><strong>Note :</strong> ${data.note}/5 - ${stars}</p><!-- /wp:paragraph -->
+<!-- wp:paragraph --><p><strong>Note :</strong> ${data.note}/5 — ${stars}</p><!-- /wp:paragraph -->
 <!-- wp:paragraph --><p>${data.resume}</p><!-- /wp:paragraph -->
 <!-- wp:buttons -->
 <div class="wp-block-buttons"><!-- wp:button {"backgroundColor":"black","textColor":"white"} --><div class="wp-block-button"><a class="wp-block-button__link has-white-color has-black-background-color has-text-color has-background" href="${data.lien_affilie||"#"}">Essayer ${data.nom_outil} →</a></div><!-- /wp:button --></div>
@@ -400,16 +400,16 @@ JSON: {"mot_cle_principal":"...","mots_cles_secondaires":["..."],"intention_domi
 
 // ─── API CALLERS ──────────────────────────────────────────────────────────────
 async function callClaude(prompt,maxTokens=3000){
-  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:maxTokens,system:prompt.system,messages:[{role:"user",content:prompt.user}]})});
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:maxTokens,system:prompt.system,messages:[{role:"user",content:prompt.user}]})});
   if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`HTTP ${res.status}`);}
   const data=await res.json();if(data.error)throw new Error(data.error.message);
-  if(data.stop_reason==="max_tokens")throw new Error("Réponse tronquée (max_tokens atteint) - réduis la longueur de l'article ou réessaie");
+  if(data.stop_reason==="max_tokens")throw new Error("Réponse tronquée (max_tokens atteint) — réduis la longueur de l'article ou réessaie");
   const text=data.content?.map(b=>b.text||"").join("")||"";if(!text)throw new Error("Réponse vide");
   const clean=text.replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();
   const s=clean.indexOf("{"),e2=clean.lastIndexOf("}");
   if(s===-1||e2===-1)throw new Error("JSON introuvable dans la réponse");
   try{return JSON.parse(clean.slice(s,e2+1));}
-  catch(e){throw new Error(`JSON invalide: ${e.message} - réessaie ou réduis la longueur`);}
+  catch(e){throw new Error(`JSON invalide: ${e.message} — réessaie ou réduis la longueur`);}
 }
 
 async function generateImageGemini(subject,geminiKey,paletteColor,isReferenseo=false){
@@ -427,7 +427,7 @@ async function generateImageGemini(subject,geminiKey,paletteColor,isReferenseo=f
   const prompt=isReferenseo
     ?`Create a professional blog featured image for an article about: "${subject}".
 Style: high-quality editorial photograph or realistic illustration. Sharp, modern, well-lit. NOT flat design. NOT generic stock photo of a person at a laptop.
-The image MUST visually represent the specific topic: "${subject}". Think about what concept, object, tool, chart, or scene is directly associated with this topic - and illustrate that, not a generic office scene.
+The image MUST visually represent the specific topic: "${subject}". Think about what concept, object, tool, chart, or scene is directly associated with this topic — and illustrate that, not a generic office scene.
 Examples: an article about "meilleur VPN" → a padlock or shield icon in a tech environment. "Ouvrir un compte titre" → financial charts or a brokerage interface. "Formation SEO" → a search engine results page or keyword ranking graph.
 NO text, NO letters, NO numbers, NO logo, NO watermark.
 Aspect ratio: 16:9 horizontal landscape. Professional and clean.`
@@ -456,7 +456,7 @@ Aspect ratio: 16:9 horizontal landscape. Clean and sharp.`;
   if(!imgPart?.inlineData?.data){
     const reason=data.candidates?.[0]?.finishReason||"unknown";
     const safety=data.candidates?.[0]?.safetyRatings?.map(r=>`${r.category}:${r.probability}`).join(",")||"";
-    throw new Error(`Gemini n'a pas retourné d'image - finishReason: ${reason}${safety?" | safety: "+safety:""}`);
+    throw new Error(`Gemini n'a pas retourné d'image — finishReason: ${reason}${safety?" | safety: "+safety:""}`);
   }
   return{base64:imgPart.inlineData.data,mimeType:imgPart.inlineData.mimeType||"image/png"};
 }
@@ -782,7 +782,7 @@ export default function App(){
         q=q.map(item=>item.siteId?item:{...item,siteId:s[0].name});
         saveLS(QUEUE_KEY,q);
       } else {
-        // Multiple sites: drop orphan items to avoid mixing - user will re-add them
+        // Multiple sites: drop orphan items to avoid mixing — user will re-add them
         q=q.filter(item=>item.siteId);
         saveLS(QUEUE_KEY,q);
       }
@@ -848,7 +848,7 @@ export default function App(){
           }catch(e){setStatus("image","error");setResults(prev=>({...prev,image:{error:e.message}}));}
         }else{
           setStatus("image","error");
-          setResults(prev=>({...prev,image:{error:"Clé Gemini manquante - va dans ⚙ Sites → ✎ → onglet Image & Gemini"}}));
+          setResults(prev=>({...prev,image:{error:"Clé Gemini manquante — va dans ⚙ Sites → ✎ → onglet Image & Gemini"}}));
         }
       }
 
@@ -897,7 +897,7 @@ export default function App(){
         const itemId=execQueueRef.current[0];
         const item=queue.find(q=>q.id===itemId)||loadLS(QUEUE_KEY,[]).find(q=>q.id===itemId);
         if(!item){execQueueRef.current.shift();continue;}
-        // Read fresh site from localStorage - avoids stale React state in async context
+        // Read fresh site from localStorage — avoids stale React state in async context
         const freshSites=loadLS(SITES_KEY,[]);
         const site=freshSites.find(s=>s.name===item.siteId)||freshSites[0];
         if(!site){execQueueRef.current.shift();continue;}
@@ -1253,7 +1253,7 @@ export default function App(){
             {activeSite&&(
               <>
                 <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:C.radiusLg,padding:"1.25rem 1.5rem",boxShadow:C.shadow}}>
-                  <p style={{margin:"0 0 1rem",fontSize:14,fontWeight:700,color:C.text}}>{editingQIdx!==null?"Modifier":"Planifier un article"} <span style={{fontSize:12,fontWeight:400,color:C.textMuted}}>- {activeSite.name}</span></p>
+                  <p style={{margin:"0 0 1rem",fontSize:14,fontWeight:700,color:C.text}}>{editingQIdx!==null?"Modifier":"Planifier un article"} <span style={{fontSize:12,fontWeight:400,color:C.textMuted}}>— {activeSite.name}</span></p>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
                     <div style={{gridColumn:"1/-1"}}><Inp label="Sujet" value={qForm.subject} onChange={e=>setQForm({...qForm,subject:e.target.value})} placeholder="ex: Comment créer un business en ligne"/></div>
                     <Inp label="Mot-clé principal" value={qForm.keyword} onChange={e=>setQForm({...qForm,keyword:e.target.value})} placeholder="ex: business en ligne"/>
@@ -1303,7 +1303,7 @@ export default function App(){
                           <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
                             <Spinner/>
                             <span style={{fontSize:12,fontWeight:600,color:C.yellowDark}}>
-                              Génération en cours - {queueForSite.filter(q=>q.status==="running").map(q=>q.subject)[0]||"…"}
+                              Génération en cours — {queueForSite.filter(q=>q.status==="running").map(q=>q.subject)[0]||"…"}
                             </span>
                           </div>
                         )}
@@ -1349,7 +1349,7 @@ export default function App(){
                             </div>
                           ):(
                             <div style={{textAlign:"center",minWidth:46,background:C.bg,borderRadius:C.radiusSm,padding:"6px 8px",border:`1.5px dashed ${C.border}`,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                              <span style={{fontSize:16,color:C.textFaint}}>-</span>
+                              <span style={{fontSize:16,color:C.textFaint}}>—</span>
                             </div>
                           )}
 
@@ -1380,6 +1380,3 @@ export default function App(){
     </div>
   );
 }
-
-
-
