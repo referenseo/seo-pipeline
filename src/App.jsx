@@ -826,7 +826,7 @@ export default function App(){
             const headerBlock=buildReviewHeaderBlock(data.review_header_data);
             data.html_content=headerBlock+"\n"+(data.html_content||"");
           }
-          if(cfg.id==="article"&&data){const stripEmDash=s=>typeof s==="string"?s.replace(/\u2014/g,"-"):s;data.html_content=stripEmDash(data.html_content);data.wp_title=stripEmDash(data.wp_title);data.meta_title=stripEmDash(data.meta_title);data.meta_description=stripEmDash(data.meta_description);data.excerpt=stripEmDash(data.excerpt);}acc[cfg.id]=data;setResults(prev=>({...prev,[cfg.id]:data}));setStatus(cfg.id,"done");
+          if(cfg.id==="article"&&data){const stripEmDash=s=>typeof s==="string"?s.replace(/\u2014/g,"-"):s;const deepStrip=o=>{if(typeof o==="string")return stripEmDash(o);if(Array.isArray(o))return o.map(deepStrip);if(o&&typeof o==="object")return Object.fromEntries(Object.entries(o).map(([k,v])=>[k,deepStrip(v)]));return o;};Object.assign(data,deepStrip(data));}acc[cfg.id]=data;setResults(prev=>({...prev,[cfg.id]:data}));setStatus(cfg.id,"done");
         }catch(e){setStatus(cfg.id,"error");acc[cfg.id]={error:e.message};setResults(prev=>({...prev,[cfg.id]:{error:e.message}}));}
       }
 
@@ -1380,4 +1380,5 @@ export default function App(){
     </div>
   );
 }
+
 
