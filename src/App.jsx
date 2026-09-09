@@ -342,6 +342,7 @@ LISTES AVANTAGES/INCONVENIENTS: quand une section presente des avantages ou inco
 ${isRef
   ?"ReferenSEO: utiliser des paragraphes simples, PAS de liste a puces. Format: <!-- wp:paragraph --><p>✅ Blabla</p><!-- /wp:paragraph --> et <!-- wp:paragraph --><p>❌ Blabla</p><!-- /wp:paragraph -->"
   :"Avantages → chaque item: <!-- wp:list-item --><li>✅ Blabla</li><!-- /wp:list-item --> | Inconvenients → <!-- wp:list-item --><li>❌ Blabla</li><!-- /wp:list-item -->"}
+TIRET CADRATIN: INTERDIT absolument. Ne jamais ecrire le caractere em dash nulle part. Choisir la meilleure alternative selon le contexte : virgule sans espace avant pour une incise ("le DSO, indicateur cle, doit etre suivi") ; deux-points pour une definition ("DSO : delai moyen de recouvrement") ; parentheses pour une precision optionnelle ("le DSO (delai moyen de recouvrement)") ; tiret simple dans les titres ou listes. Ne jamais mettre espace avant une virgule.
 CHIFFRES: toujours en chiffres (2026 pas "deux mille vingt-six", 49€ pas "quarante-neuf euros", 3 pas "trois" sauf debut de phrase).
 [4] FAQ: 3 questions PAA, reponses 50-150 mots. ${useYear?"Annee dans FAQ: [current_date format=Y]":""}
 [5] CONCLUSION+CTA: ${isLM?"benefice concret AVANT l'action.":"CTA clair."} Fin: <!-- wp:shortcode -->${scEnd}<!-- /wp:shortcode -->
@@ -1380,6 +1381,9 @@ export default function App(){
     </div>
   );
 }
+
+
+
 
 
 
