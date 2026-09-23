@@ -403,7 +403,12 @@ JSON: {"mot_cle_principal":"...","mots_cles_secondaires":["..."],"intention_domi
 async function callClaude(prompt,maxTokens=3000){
   const tool={name:"json_output",description:"Retourne la reponse structuree",input_schema:{type:"object",properties:{result:{type:"object",description:"Le JSON de reponse complet"}},required:["result"]}};
   const body={model:"claude-sonnet-4-6",max_tokens:maxTokens,system:prompt.system,tools:[tool],tool_choice:{type:"tool",name:"json_output"},messages:[{role:"user",content:prompt.user}]};
-  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify(body)});
+  const controller=new AbortController();
+  const timeoutId=setTimeout(()=>controller.abort(),300000);
+  let res;
+  try{res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify(body),signal:controller.signal});}
+  catch(e){if(e.name==="AbortError")throw new Error("Timeout : pas de reponse apres 5 min");throw e;}
+  finally{clearTimeout(timeoutId);}
   if(!res.ok){const e=await res.json();throw new Error(e.error?.message||"HTTP "+res.status);}
   const data=await res.json();
   if(data.error)throw new Error(data.error.message);
@@ -905,8 +910,11 @@ export default function App(){
         if(!site){execQueueRef.current.shift();continue;}
         setSubject(item.subject);setKeyword(item.keyword);setWordCount(item.wordCount||1500);setArticleType(item.articleType||"article_simple");
         setQueue(prev=>{const u=prev.map(q=>q.id===itemId?{...q,status:"running"}:q);saveLS(QUEUE_KEY,u);return u;});
-        await runPipelineFor(item.subject,item.keyword,item.wordCount||1500,site,item.articleType||"article_simple",{},true);
-        setQueue(prev=>{const u=prev.filter(q=>q.id!==itemId);saveLS(QUEUE_KEY,u);return u;});
+        let pErr=null;
+        try{await runPipelineFor(item.subject,item.keyword,item.wordCount||1500,site,item.articleType||"article_simple",{},true);}
+        catch(e){pErr=e.message||String(e);}
+        if(pErr){setQueue(prev=>{const u=prev.map(q=>q.id===itemId?{...q,status:"error",errorMsg:pErr}:q);saveLS(QUEUE_KEY,u);return u;});}
+        else{setQueue(prev=>{const u=prev.filter(q=>q.id!==itemId);saveLS(QUEUE_KEY,u);return u;})};
         execQueueRef.current.shift();
       }
     }finally{isProcessingRef.current=false;setBatchRunning(false);abortRef.current=false;}
