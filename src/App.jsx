@@ -1314,7 +1314,7 @@ export default function App(){
                           </Btn>
                         )}
                         {batchRunning&&(
-                          <Btn variant="outline" onClick={()=>{abortRef.current=true;setBatchRunning(false);}} style={{marginLeft:"auto",height:34,fontSize:12,color:C.red,borderColor:C.red}}>Arrêter</Btn>
+                          <Btn variant="outline" onClick={()=>{abortRef.current=true;setBatchRunning(false);execQueueRef.current=[];setQueue(prev=>{const u=prev.map(q=>q.status==="pending"?{...q,status:"queued"}:q);saveLS(QUEUE_KEY,u);return u;});}} style={{marginLeft:"auto",height:34,fontSize:12,color:C.red,borderColor:C.red}}>Arrêter</Btn>
                         )}
                       </div>
                     )}
@@ -1365,6 +1365,7 @@ export default function App(){
                           {item.status==="queued"&&editingQIdx!==realIdx&&<Btn variant="ghost" onClick={()=>startEditQueue(realIdx)} style={{height:30,fontSize:13,padding:"0 8px"}}>✎</Btn>}
                           {(item.status==="queued")&&<Btn variant="primary" onClick={()=>handleRunFromQueue(realIdx)} style={{height:32,fontSize:12,padding:"0 14px"}}>▶</Btn>}
                           {item.status==="pending"&&<span style={{fontSize:11,color:C.purple,fontWeight:600,padding:"0 6px"}}>En file…</span>}
+                          {item.status==="error"&&item.errorMsg&&<span style={{fontSize:11,color:C.red,maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:500}} title={item.errorMsg}>⚠ {item.errorMsg.slice(0,45)}{item.errorMsg.length>45?"…":""}</span>}
                           {item.status!=="running"&&item.status!=="pending"&&<Btn variant="danger" onClick={()=>removeFromQueue(realIdx)} style={{height:30,fontSize:12,padding:"0 8px"}}>✕</Btn>}
                           {item.status==="pending"&&<Btn variant="ghost" onClick={()=>{execQueueRef.current=execQueueRef.current.filter(id=>id!==item.id);setQueue(prev=>{const u=prev.map(q=>q.id===item.id?{...q,status:"queued"}:q);saveLS(QUEUE_KEY,u);return u;});}} style={{height:30,fontSize:11,padding:"0 8px",color:C.textFaint}}>✕</Btn>}
                         </div>
@@ -1381,6 +1382,10 @@ export default function App(){
     </div>
   );
 }
+
+
+
+
 
 
 
