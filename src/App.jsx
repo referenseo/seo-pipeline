@@ -401,16 +401,17 @@ JSON: {"mot_cle_principal":"...","mots_cles_secondaires":["..."],"intention_domi
 
 // ─── API CALLERS ──────────────────────────────────────────────────────────────
 async function callClaude(prompt,maxTokens=3000){
-  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:maxTokens,system:prompt.system,messages:[{role:"user",content:prompt.user}]})});
-  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`HTTP ${res.status}`);}
-  const data=await res.json();if(data.error)throw new Error(data.error.message);
-  if(data.stop_reason==="max_tokens")throw new Error("Réponse tronquée (max_tokens atteint) — réduis la longueur de l'article ou réessaie");
-  const text=data.content?.map(b=>b.text||"").join("")||"";if(!text)throw new Error("Réponse vide");
-  const clean=text.replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();
-  const s=clean.indexOf("{"),e2=clean.lastIndexOf("}");
-  if(s===-1||e2===-1)throw new Error("JSON introuvable dans la réponse");
-  try{return JSON.parse(clean.slice(s,e2+1));}
-  catch(e){throw new Error(`JSON invalide: ${e.message} — réessaie ou réduis la longueur`);}
+  const tool={name:"json_output",description:"Retourne la reponse structuree",input_schema:{type:"object",properties:{result:{type:"object",description:"Le JSON de reponse complet"}},required:["result"]}};
+  const body={model:"claude-sonnet-4-6",max_tokens:maxTokens,system:prompt.system,tools:[tool],tool_choice:{type:"tool",name:"json_output"},messages:[{role:"user",content:prompt.user}]};
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify(body)});
+  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||"HTTP "+res.status);}
+  const data=await res.json();
+  if(data.error)throw new Error(data.error.message);
+  if(data.stop_reason==="max_tokens")throw new Error("Reponse tronquee (max_tokens atteint) — reduis la longueur de l article ou reessaie");
+  const toolBlock=data.content?.find(b=>b.type==="tool_use"&&b.name==="json_output");
+  if(toolBlock?.input?.result)return toolBlock.input.result;
+  if(toolBlock?.input&&typeof toolBlock.input==="object"&&Object.keys(toolBlock.input).length>0)return toolBlock.input;
+  throw new Error("Reponse tool_use vide ou absente");
 }
 
 async function generateImageGemini(subject,geminiKey,paletteColor,isReferenseo=false){
@@ -1382,6 +1383,7 @@ export default function App(){
     </div>
   );
 }
+
 
 
 
