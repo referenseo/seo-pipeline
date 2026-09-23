@@ -412,7 +412,7 @@ async function callClaude(prompt,maxTokens=3000){
   if(!res.ok){const e=await res.json();throw new Error(e.error?.message||"HTTP "+res.status);}
   const data=await res.json();
   if(data.error)throw new Error(data.error.message);
-  if(data.stop_reason==="max_tokens")throw new Error("Reponse tronquee (max_tokens atteint) — reduis la longueur de l article ou reessaie");
+  if(data.stop_reason==="max_tokens")throw new Error("Reponse tronquee : limite de "+maxTokens+" tokens atteinte");
   const toolBlock=data.content?.find(b=>b.type==="tool_use"&&b.name==="json_output");
   if(toolBlock?.input?.result)return toolBlock.input.result;
   if(toolBlock?.input&&typeof toolBlock.input==="object"&&Object.keys(toolBlock.input).length>0)return toolBlock.input;
@@ -818,9 +818,9 @@ export default function App(){
     const profile=freshSite?.editorial||DEFAULT_PROFILE;
     console.log("[Pipeline] Site:",freshSite?.name,"| GeminiKey:",profile.geminiKey?"✓ présente":"✗ manquante");
     const cfgs=[
-      {id:"intention",  tokens:2000,build:()=>PROMPTS.intention(subj,kw,siteName,wc,instructions.intention||"")},
-      {id:"competitors",tokens:3000,build:()=>PROMPTS.competitors(subj,kw,siteName,wc,instructions.competitors||"")},
-      {id:"longtail",   tokens:2500,build:()=>PROMPTS.longtail(subj,kw,siteName,wc,instructions.longtail||"")},
+      {id:"intention",tokens:6000,build:()=>PROMPTS.intention(subj,kw,siteName,wc,instructions.intention||"")},
+      {id:"competitors",tokens:10000,build:()=>PROMPTS.competitors(subj,kw,siteName,wc,instructions.competitors||"")},
+      {id:"longtail",tokens:8000,build:()=>PROMPTS.longtail(subj,kw,siteName,wc,instructions.longtail||"")},
       {id:"article",    tokens:16000,build:()=>buildArticlePrompt(subj,kw,siteName,wc,instructions.article||"",acc,profile,atype,lsc)},
     ];
     try{
