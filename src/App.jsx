@@ -404,10 +404,10 @@ async function callClaude(prompt,maxTokens=3000){
   const tool={name:"json_output",description:"Retourne la reponse structuree",input_schema:{type:"object",properties:{result:{type:"object",description:"Le JSON de reponse complet"}},required:["result"]}};
   const body={model:"claude-sonnet-4-6",max_tokens:maxTokens,system:prompt.system,tools:[tool],tool_choice:{type:"tool",name:"json_output"},messages:[{role:"user",content:prompt.user}]};
   const controller=new AbortController();
-  const timeoutId=setTimeout(()=>controller.abort(),300000);
+  const timeoutId=setTimeout(()=>controller.abort(),480000);
   let res;
   try{res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify(body),signal:controller.signal});}
-  catch(e){if(e.name==="AbortError")throw new Error("Timeout : pas de reponse apres 5 min");throw e;}
+  catch(e){if(e.name==="AbortError")throw new Error("Timeout : pas de reponse apres 8 min");throw e;}
   finally{clearTimeout(timeoutId);}
   if(!res.ok){const e=await res.json();throw new Error(e.error?.message||"HTTP "+res.status);}
   const data=await res.json();
@@ -811,7 +811,7 @@ export default function App(){
 
   async function runPipelineFor(subj,kw,wc,site,atype,lsc,autoPublish=false){
     abortRef.current=false;setRunning(true);setResults({});setStepStatus({});setWpStatus(null);setWpResult(null);setImageStatus(null);setImagePreview(null);
-    const acc={};const siteName=site?.name||"mon site";
+    const acc={};const siteName=site?.name||"mon site";let failure=null;let published=false;
     // Always read fresh site data from localStorage
     const freshSites=loadLS(SITES_KEY,[]);
     const freshSite=freshSites.find(s=>s.name===site?.name||s.wpUrl===site?.wpUrl)||freshSites[0]||site;
@@ -825,7 +825,7 @@ export default function App(){
     ];
     try{
       for(const cfg of cfgs){
-        if(abortRef.current)break;setStatus(cfg.id,"running");
+        if(abortRef.current)break;setStatus(cfg.id,"running");console.log("[Pipeline] Etape",cfg.id,"debut");
         try{
           const data=await callClaude(cfg.build(),cfg.tokens);
           // Inject review_header into html_content if present
@@ -833,8 +833,8 @@ export default function App(){
             const headerBlock=buildReviewHeaderBlock(data.review_header_data);
             data.html_content=headerBlock+"\n"+(data.html_content||"");
           }
-          acc[cfg.id]=data;setResults(prev=>({...prev,[cfg.id]:data}));setStatus(cfg.id,"done");
-        }catch(e){setStatus(cfg.id,"error");acc[cfg.id]={error:e.message};setResults(prev=>({...prev,[cfg.id]:{error:e.message}}));}
+          acc[cfg.id]=data;setResults(prev=>({...prev,[cfg.id]:data}));setStatus(cfg.id,"done");console.log("[Pipeline] Etape",cfg.id,"OK");
+        }catch(e){console.error("[Pipeline] Etape",cfg.id,"ECHEC:",e.message,e.stack);setStatus(cfg.id,"error");acc[cfg.id]={error:e.message};setResults(prev=>({...prev,[cfg.id]:{error:e.message}}));failure={step:cfg.id,error:e.message};break;}
       }
 
       // Image generation
@@ -852,7 +852,7 @@ export default function App(){
             acc.imageBase64=base64;acc.imageMimeType=mimeType;acc.imagePaletteColor=paletteColor;
             setResults(prev=>({...prev,image:{base64,mimeType,paletteColor}}));
             setStatus("image","done");
-          }catch(e){setStatus("image","error");setResults(prev=>({...prev,image:{error:e.message}}));}
+          }catch(e){console.error("[Pipeline] Image ECHEC:",e.message);setStatus("image","error");setResults(prev=>({...prev,image:{error:e.message}}));}
         }else{
           setStatus("image","error");
           setResults(prev=>({...prev,image:{error:"Clé Gemini manquante — va dans ⚙ Sites → ✎ → onglet Image & Gemini"}}));
@@ -866,7 +866,7 @@ export default function App(){
           const slug=buildSlug(subj);
           // Step 1: publish article without image first (fast)
           const r=await publishToWordPress(freshSite,acc.article,null,slug);
-          setWpResult(r);setWpStatus("published");
+          setWpResult(r);setWpStatus("published");published=true;console.log("[Pipeline] WordPress OK, id",r?.id);
           // Step 2: upload image with exact bg color and attach as featured
           if(acc.imageBase64&&r.id){
             try{
@@ -882,9 +882,9 @@ export default function App(){
               setResults(prev=>({...prev,image:{...prev.image,uploadError:e.message}}));
             }
           }
-        }catch(e){setWpStatus("error_wp");setWpResult({error:e.message});}
+        }catch(e){console.error("[Pipeline] WordPress ECHEC:",e.message,e.stack);setWpStatus("error_wp");setWpResult({error:e.message});failure={step:"wordpress",error:e.message};}
       }
-    }finally{setRunning(false);}
+    if(abortRef.current&&!failure&&!published)failure={step:"arret",error:"Arrete manuellement"};if(autoPublish&&!failure&&!published)failure={step:"wordpress",error:"Publication non effectuee"};}catch(e){console.error("[Pipeline] Exception inattendue:",e.message,e.stack);failure={step:"inattendue",error:e.message};}finally{setRunning(false);console.log("[Pipeline] Fin:",failure?failure.step+" / "+failure.error:"OK");}return failure;
   }
 
   const handleRunPipeline=async()=>{
@@ -911,8 +911,8 @@ export default function App(){
         setSubject(item.subject);setKeyword(item.keyword);setWordCount(item.wordCount||1500);setArticleType(item.articleType||"article_simple");
         setQueue(prev=>{const u=prev.map(q=>q.id===itemId?{...q,status:"running"}:q);saveLS(QUEUE_KEY,u);return u;});
         let pErr=null;
-        try{await runPipelineFor(item.subject,item.keyword,item.wordCount||1500,site,item.articleType||"article_simple",{},true);}
-        catch(e){pErr=e.message||String(e);}
+        try{const f=await runPipelineFor(item.subject,item.keyword,item.wordCount||1500,site,item.articleType||"article_simple",{},true);if(f&&f.step==="arret"){setQueue(prev=>{const u=prev.map(q=>q.id===itemId?{...q,status:"queued"}:q);saveLS(QUEUE_KEY,u);return u;});break;}if(f){pErr="Etape "+f.step+" : "+f.error;console.error("[Queue] Article en erreur:",pErr);}}
+        catch(e){console.error("[Queue] Exception:",e);pErr=e.message||String(e);}
         if(pErr){setQueue(prev=>{const u=prev.map(q=>q.id===itemId?{...q,status:"error",errorMsg:pErr}:q);saveLS(QUEUE_KEY,u);return u;});}
         else{setQueue(prev=>{const u=prev.filter(q=>q.id!==itemId);saveLS(QUEUE_KEY,u);return u;})};
         execQueueRef.current.shift();
