@@ -401,7 +401,7 @@ JSON: {"mot_cle_principal":"...","mots_cles_secondaires":["..."],"intention_domi
 
 // ─── API CALLERS ──────────────────────────────────────────────────────────────
 async function callClaude(prompt,maxTokens=3000){
-  const tool={name:"json_output",description:"Retourne la reponse structuree",input_schema:{type:"object",properties:{result:{type:"object",description:"Le JSON de reponse complet"}},required:["result"]}};
+  const tool={name:"json_output",description:"Retourne la reponse structuree",input_schema:{type:"object",properties:{result:{type:"object",description:"Le JSON de reponse complet, sous forme d objet avec toutes les cles demandees au premier niveau (jamais une chaine)"}},required:["result"]}};
   const body={model:"claude-sonnet-4-6",max_tokens:maxTokens,system:prompt.system,tools:[tool],tool_choice:{type:"tool",name:"json_output"},messages:[{role:"user",content:prompt.user}]};
   const controller=new AbortController();
   const timeoutId=setTimeout(()=>controller.abort(),480000);
@@ -414,7 +414,7 @@ async function callClaude(prompt,maxTokens=3000){
   if(data.error)throw new Error(data.error.message);
   if(data.stop_reason==="max_tokens")throw new Error("Reponse tronquee : limite de "+maxTokens+" tokens atteinte");
   const toolBlock=data.content?.find(b=>b.type==="tool_use"&&b.name==="json_output");
-  if(toolBlock?.input?.result)return toolBlock.input.result;
+  if(toolBlock?.input?.result!==undefined){let r=toolBlock.input.result;if(typeof r==="string"){try{r=JSON.parse(r);}catch(pe){throw new Error("result recu en texte non parsable ("+r.length+" car.)");}}if(r&&typeof r==="object"&&!Array.isArray(r)){const k=Object.keys(r);if(k.length===1&&r[k[0]]&&typeof r[k[0]]==="object"&&!Array.isArray(r[k[0]])){console.log("[Claude] deballage de la cle",k[0]);r=r[k[0]];}}console.log("[Claude] cles recues:",Object.keys(r||{}).join(","));return r;}
   if(toolBlock?.input&&typeof toolBlock.input==="object"&&Object.keys(toolBlock.input).length>0)return toolBlock.input;
   throw new Error("Reponse tool_use vide ou absente");
 }
@@ -827,7 +827,7 @@ export default function App(){
       for(const cfg of cfgs){
         if(abortRef.current)break;setStatus(cfg.id,"running");console.log("[Pipeline] Etape",cfg.id,"debut");
         try{
-          const data=await callClaude(cfg.build(),cfg.tokens);
+          const data=await callClaude(cfg.build(),cfg.tokens);if(cfg.id==="article"&&!data?.html_content)throw new Error("html_content absent, cles recues: "+Object.keys(data||{}).join(","));
           // Inject review_header into html_content if present
           if(cfg.id==="article"&&data.review_header_data){
             const headerBlock=buildReviewHeaderBlock(data.review_header_data);
