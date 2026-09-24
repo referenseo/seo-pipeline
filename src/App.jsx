@@ -400,7 +400,7 @@ JSON: {"mot_cle_principal":"...","mots_cles_secondaires":["..."],"intention_domi
 };
 
 // ─── API CALLERS ──────────────────────────────────────────────────────────────
-const ARTICLE_SCHEMA={type:"object",properties:{mot_cle_principal_final:{type:"string"},mots_cles_secondaires_final:{type:"array",items:{type:"string"}},angle_final:{type:"string"},promesse_article:{type:"string"},hook_verite:{type:"string"},meta_title:{type:"string"},meta_description:{type:"string"},wp_title:{type:"string"},excerpt:{type:"string"},champ_semantique:{type:"array",items:{type:"string"}},ancres_maillage:{type:"array",items:{type:"object",properties:{ancre:{type:"string"},sujet_cible:{type:"string"}}}},moments_signature_utilises:{type:"array",items:{type:"string"}},auto_correction_log:{type:"array",items:{type:"string"}},word_count:{type:"number"},reading_time_minutes:{type:"number"},seo_score_estimate:{type:"number"},review_header_data:{type:"object",description:"Uniquement pour le type review, sinon omettre",properties:{nom_outil:{type:"string"},note:{type:"number"},resume:{type:"string"},lien_affilie:{type:"string"},logo_url:{type:"string"}}},html_content:{type:"string",description:"Article complet en blocs Gutenberg HTML"}},required:["meta_title","meta_description","wp_title","excerpt","html_content"]};
+const ARTICLE_SCHEMA={type:"object",properties:{mot_cle_principal_final:{type:"string"},mots_cles_secondaires_final:{type:"array",items:{type:"string"}},angle_final:{type:"string"},promesse_article:{type:"string"},hook_verite:{type:"string"},meta_title:{type:"string"},meta_description:{type:"string"},wp_title:{type:"string"},excerpt:{type:"string"},champ_semantique:{type:"array",items:{type:"string"}},ancres_maillage:{type:"array",items:{type:"object",properties:{ancre:{type:"string"},sujet_cible:{type:"string"}}}},moments_signature_utilises:{type:"array",items:{type:"string"}},auto_correction_log:{type:"array",items:{type:"string"}},word_count:{type:"number"},reading_time_minutes:{type:"number"},seo_score_estimate:{type:"number"},review_header_data:{type:"object",description:"Uniquement pour le type review, sinon omettre",properties:{nom_outil:{type:"string"},note:{type:"number"},resume:{type:"string"},lien_affilie:{type:"string"},logo_url:{type:"string"}}},slug:{type:"string",description:"Slug SEO optimal de 2 a 5 mots selon ce qui performe le mieux sur la requete : minuscules, sans accents, mots separes par des tirets, sans mots vides, centre sur le mot-cle principal"},categorie:{type:"string",description:"Nom exact d une categorie WordPress de la liste fournie"},html_content:{type:"string",description:"Article complet en blocs Gutenberg HTML"}},required:["meta_title","meta_description","wp_title","excerpt","html_content"]};
 async function callClaude(prompt,maxTokens=3000,schema=null){
   const tool=schema?{name:"json_output",description:"Retourne l article structure, chaque champ rempli directement",input_schema:schema}:{name:"json_output",description:"Retourne la reponse structuree",input_schema:{type:"object",properties:{result:{type:"object",description:"Le JSON de reponse complet, sous forme d objet avec toutes les cles demandees au premier niveau (jamais une chaine)"}},required:["result"]}};
   const body={model:"claude-sonnet-4-6",max_tokens:maxTokens,system:prompt.system,tools:[tool],tool_choice:{type:"tool",name:"json_output"},messages:[{role:"user",content:prompt.user}]};
@@ -504,10 +504,9 @@ function buildSlug(subject){
   const stopwords=new Set(["comment","pour","les","des","une","avec","dans","sur","par","que","qui","quoi","est","son","ses","tout","plus","bien","mais","sans","pas","comme","aux","ces","cet","cette","nous","vous","leur","leurs","mon","ton","le","la","de","du","en","et","ou","un","au","ce","se","si","ni","ne"]);
   const words=subject.toLowerCase()
     .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-    .replace(/[^a-z\s]/g,"")
+    .replace(/[^a-z0-9\s]/g,"")
     .split(/\s+/)
-    .filter(w=>w.length>2&&!stopwords.has(w))
-    .slice(0,2);
+    .filter(w=>(w.length>2||!isNaN(w))&&!stopwords.has(w)).slice(0,4);
   return words.length>0?words.join("-"):"article";
 }
 
@@ -545,7 +544,7 @@ async function publishToWordPress(profile,articleData,featuredMediaId,slug){
     :articleData.meta_title;
   const body={title:articleData.wp_title||articleData.meta_title,content:articleData.html_content,excerpt:articleData.excerpt,status:"draft",meta:{_seopress_titles_title:seoTitle,_seopress_titles_desc:articleData.meta_description||""}};
   if(featuredMediaId)body.featured_media=featuredMediaId;
-  if(slug)body.slug=slug;
+  if(slug)body.slug=slug;if(articleData.categoryId)body.categories=[articleData.categoryId];
   const res=await fetch(`${url}/wp-json/wp/v2/posts`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Basic ${creds}`},body:JSON.stringify(body)});
   if(!res.ok){const e=await res.json();throw new Error(e.message||`HTTP ${res.status}`);}
   return await res.json();
@@ -816,7 +815,7 @@ export default function App(){
     // Always read fresh site data from localStorage
     const freshSites=loadLS(SITES_KEY,[]);
     const freshSite=freshSites.find(s=>s.name===site?.name||s.wpUrl===site?.wpUrl)||freshSites[0]||site;
-    const profile=freshSite?.editorial||DEFAULT_PROFILE;
+    const profile=freshSite?.editorial||DEFAULT_PROFILE;let wpCats=[];try{const cr=await fetch(freshSite.wpUrl.replace(/\/$/,"")+"/wp-json/wp/v2/categories?per_page=100&_fields=id,name",{headers:{Authorization:"Basic "+btoa(freshSite.wpUser+":"+freshSite.appPassword)}});if(cr.ok)wpCats=await cr.json();console.log("[Pipeline] Categories WP:",wpCats.map(x=>x.name).join(", "));}catch(ce){console.warn("[Pipeline] Categories WP indisponibles:",ce.message);}
     console.log("[Pipeline] Site:",freshSite?.name,"| GeminiKey:",profile.geminiKey?"✓ présente":"✗ manquante");
     const cfgs=[
       {id:"intention",tokens:6000,build:()=>PROMPTS.intention(subj,kw,siteName,wc,instructions.intention||"")},
@@ -828,7 +827,7 @@ export default function App(){
       for(const cfg of cfgs){
         if(abortRef.current)break;setStatus(cfg.id,"running");console.log("[Pipeline] Etape",cfg.id,"debut");
         try{
-          const data=await callClaude(cfg.build(),cfg.tokens,cfg.schema);if(cfg.id==="article"&&!data?.html_content)throw new Error("html_content absent, cles recues: "+Object.keys(data||{}).join(","));
+          const data=await callClaude(cfg.id==="article"&&wpCats.length?(()=>{const p=cfg.build();return{...p,user:p.user+"\n\nCATEGORIE WORDPRESS: choisis la plus pertinente dans cette liste et renvoie son nom exact dans le champ categorie : "+wpCats.map(x=>x.name).join(" | ")};})():cfg.build(),cfg.tokens,cfg.schema);if(cfg.id==="article"&&!data?.html_content)throw new Error("html_content absent, cles recues: "+Object.keys(data||{}).join(","));
           // Inject review_header into html_content if present
           if(cfg.id==="article"&&data.review_header_data){
             const headerBlock=buildReviewHeaderBlock(data.review_header_data);
@@ -864,7 +863,7 @@ export default function App(){
       if(autoPublish&&acc.article&&!acc.article.error&&freshSite){
         setWpStatus("publishing");
         try{
-          const slug=buildSlug(subj);
+          const aiSlug=(acc.article.slug||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").split("-").filter(Boolean).slice(0,5);const slug=aiSlug.length>=2?aiSlug.join("-"):buildSlug(kw||subj);const norm=v=>(v||"").replace(/&amp;/g,"&").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();const cat=wpCats.find(x=>norm(x.name)===norm(acc.article.categorie));if(cat)acc.article.categoryId=cat.id;console.log("[Pipeline] Slug:",slug,"| Categorie:",cat?cat.name+" ("+cat.id+")":"aucune correspondance, defaut WP");
           // Step 1: publish article without image first (fast)
           const r=await publishToWordPress(freshSite,acc.article,null,slug);
           setWpResult(r);setWpStatus("published");published=true;console.log("[Pipeline] WordPress OK, id",r?.id);
