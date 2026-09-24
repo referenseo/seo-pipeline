@@ -1373,7 +1373,7 @@ export default function App(){
 
                           <Pill status={isRunningItem?"running":item.status==="pending"?"pending":"queued"}/>
                           {item.status==="queued"&&editingQIdx!==realIdx&&<Btn variant="ghost" onClick={()=>startEditQueue(realIdx)} style={{height:30,fontSize:13,padding:"0 8px"}}>✎</Btn>}
-                          {(item.status==="queued")&&<Btn variant="primary" onClick={()=>handleRunFromQueue(realIdx)} style={{height:32,fontSize:12,padding:"0 14px"}}>▶</Btn>}
+                          {item.status==="error"&&<Btn variant="ghost" onClick={()=>setQueue(prev=>{const u=prev.map(q=>q.id===item.id?{...q,status:"queued",errorMsg:null}:q);saveLS(QUEUE_KEY,u);return u;})} style={{height:30,fontSize:12,padding:"0 10px"}}>Relancer</Btn>}{(item.status==="queued")&&<Btn variant="primary" onClick={()=>handleRunFromQueue(realIdx)} style={{height:32,fontSize:12,padding:"0 14px"}}>▶</Btn>}
                           {item.status==="pending"&&<span style={{fontSize:11,color:C.purple,fontWeight:600,padding:"0 6px"}}>En file…</span>}
                           {item.status==="error"&&item.errorMsg&&<span style={{fontSize:11,color:C.red,maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:500}} title={item.errorMsg}>⚠ {item.errorMsg.slice(0,45)}{item.errorMsg.length>45?"…":""}</span>}
                           {item.status!=="running"&&item.status!=="pending"&&<Btn variant="danger" onClick={()=>removeFromQueue(realIdx)} style={{height:30,fontSize:12,padding:"0 8px"}}>✕</Btn>}
