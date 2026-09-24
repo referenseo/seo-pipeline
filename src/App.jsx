@@ -827,7 +827,7 @@ export default function App(){
       for(const cfg of cfgs){
         if(abortRef.current)break;setStatus(cfg.id,"running");console.log("[Pipeline] Etape",cfg.id,"debut");
         try{
-          const data=await callClaude(cfg.id==="article"&&wpCats.length?(()=>{const p=cfg.build();return{...p,user:p.user+"\n\nCATEGORIE WORDPRESS: choisis la plus pertinente dans cette liste et renvoie son nom exact dans le champ categorie : "+wpCats.map(x=>x.name).join(" | ")};})():cfg.build(),cfg.tokens,cfg.schema);if(cfg.id==="article"&&!data?.html_content)throw new Error("html_content absent, cles recues: "+Object.keys(data||{}).join(","));
+          const data=await callClaude(cfg.id==="article"&&wpCats.length?(()=>{const p=cfg.build();return{...p,user:p.user+"\n\nCATEGORIE WORDPRESS: choisis celle qui reflete le theme principal traite par l article (son sujet), pas l audience visee ni l etape du parcours du lecteur, et renvoie son nom exact dans le champ categorie : "+wpCats.map(x=>x.name).join(" | ")};})():cfg.build(),cfg.tokens,cfg.schema);if(cfg.id==="article"&&!data?.html_content)throw new Error("html_content absent, cles recues: "+Object.keys(data||{}).join(","));
           // Inject review_header into html_content if present
           if(cfg.id==="article"&&data.review_header_data){
             const headerBlock=buildReviewHeaderBlock(data.review_header_data);
