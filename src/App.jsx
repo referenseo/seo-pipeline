@@ -400,8 +400,9 @@ JSON: {"mot_cle_principal":"...","mots_cles_secondaires":["..."],"intention_domi
 };
 
 // ─── API CALLERS ──────────────────────────────────────────────────────────────
-async function callClaude(prompt,maxTokens=3000){
-  const tool={name:"json_output",description:"Retourne la reponse structuree",input_schema:{type:"object",properties:{result:{type:"object",description:"Le JSON de reponse complet, sous forme d objet avec toutes les cles demandees au premier niveau (jamais une chaine)"}},required:["result"]}};
+const ARTICLE_SCHEMA={type:"object",properties:{mot_cle_principal_final:{type:"string"},mots_cles_secondaires_final:{type:"array",items:{type:"string"}},angle_final:{type:"string"},promesse_article:{type:"string"},hook_verite:{type:"string"},meta_title:{type:"string"},meta_description:{type:"string"},wp_title:{type:"string"},excerpt:{type:"string"},champ_semantique:{type:"array",items:{type:"string"}},ancres_maillage:{type:"array",items:{type:"object",properties:{ancre:{type:"string"},sujet_cible:{type:"string"}}}},moments_signature_utilises:{type:"array",items:{type:"string"}},auto_correction_log:{type:"array",items:{type:"string"}},word_count:{type:"number"},reading_time_minutes:{type:"number"},seo_score_estimate:{type:"number"},review_header_data:{type:"object",description:"Uniquement pour le type review, sinon omettre",properties:{nom_outil:{type:"string"},note:{type:"number"},resume:{type:"string"},lien_affilie:{type:"string"},logo_url:{type:"string"}}},html_content:{type:"string",description:"Article complet en blocs Gutenberg HTML"}},required:["meta_title","meta_description","wp_title","excerpt","html_content"]};
+async function callClaude(prompt,maxTokens=3000,schema=null){
+  const tool=schema?{name:"json_output",description:"Retourne l article structure, chaque champ rempli directement",input_schema:schema}:{name:"json_output",description:"Retourne la reponse structuree",input_schema:{type:"object",properties:{result:{type:"object",description:"Le JSON de reponse complet, sous forme d objet avec toutes les cles demandees au premier niveau (jamais une chaine)"}},required:["result"]}};
   const body={model:"claude-sonnet-4-6",max_tokens:maxTokens,system:prompt.system,tools:[tool],tool_choice:{type:"tool",name:"json_output"},messages:[{role:"user",content:prompt.user}]};
   const controller=new AbortController();
   const timeoutId=setTimeout(()=>controller.abort(),480000);
@@ -414,7 +415,7 @@ async function callClaude(prompt,maxTokens=3000){
   if(data.error)throw new Error(data.error.message);
   if(data.stop_reason==="max_tokens")throw new Error("Reponse tronquee : limite de "+maxTokens+" tokens atteinte");
   const toolBlock=data.content?.find(b=>b.type==="tool_use"&&b.name==="json_output");
-  if(toolBlock?.input?.result!==undefined){let r=toolBlock.input.result;if(typeof r==="string"){try{r=JSON.parse(r);}catch(pe){throw new Error("result recu en texte non parsable ("+r.length+" car.)");}}if(r&&typeof r==="object"&&!Array.isArray(r)){const k=Object.keys(r);if(k.length===1&&r[k[0]]&&typeof r[k[0]]==="object"&&!Array.isArray(r[k[0]])){console.log("[Claude] deballage de la cle",k[0]);r=r[k[0]];}}console.log("[Claude] cles recues:",Object.keys(r||{}).join(","));return r;}
+  if(schema){const r=toolBlock?.input;if(!r||typeof r!=="object")throw new Error("Reponse tool_use vide");console.log("[Claude] cles recues:",Object.keys(r).join(","));return r;}if(toolBlock?.input?.result!==undefined){let r=toolBlock.input.result;if(typeof r==="string"){try{r=JSON.parse(r);}catch(pe){throw new Error("result recu en texte non parsable ("+r.length+" car.)");}}if(r&&typeof r==="object"&&!Array.isArray(r)){const k=Object.keys(r);if(k.length===1&&r[k[0]]&&typeof r[k[0]]==="object"&&!Array.isArray(r[k[0]])){console.log("[Claude] deballage de la cle",k[0]);r=r[k[0]];}}console.log("[Claude] cles recues:",Object.keys(r||{}).join(","));return r;}
   if(toolBlock?.input&&typeof toolBlock.input==="object"&&Object.keys(toolBlock.input).length>0)return toolBlock.input;
   throw new Error("Reponse tool_use vide ou absente");
 }
@@ -821,13 +822,13 @@ export default function App(){
       {id:"intention",tokens:6000,build:()=>PROMPTS.intention(subj,kw,siteName,wc,instructions.intention||"")},
       {id:"competitors",tokens:10000,build:()=>PROMPTS.competitors(subj,kw,siteName,wc,instructions.competitors||"")},
       {id:"longtail",tokens:8000,build:()=>PROMPTS.longtail(subj,kw,siteName,wc,instructions.longtail||"")},
-      {id:"article",    tokens:16000,build:()=>buildArticlePrompt(subj,kw,siteName,wc,instructions.article||"",acc,profile,atype,lsc)},
+      {id:"article",tokens:16000,schema:ARTICLE_SCHEMA,build:()=>buildArticlePrompt(subj,kw,siteName,wc,instructions.article||"",acc,profile,atype,lsc)},
     ];
     try{
       for(const cfg of cfgs){
         if(abortRef.current)break;setStatus(cfg.id,"running");console.log("[Pipeline] Etape",cfg.id,"debut");
         try{
-          const data=await callClaude(cfg.build(),cfg.tokens);if(cfg.id==="article"&&!data?.html_content)throw new Error("html_content absent, cles recues: "+Object.keys(data||{}).join(","));
+          const data=await callClaude(cfg.build(),cfg.tokens,cfg.schema);if(cfg.id==="article"&&!data?.html_content)throw new Error("html_content absent, cles recues: "+Object.keys(data||{}).join(","));
           // Inject review_header into html_content if present
           if(cfg.id==="article"&&data.review_header_data){
             const headerBlock=buildReviewHeaderBlock(data.review_header_data);
