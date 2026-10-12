@@ -336,7 +336,7 @@ MÉTADONNÉES: ${titleNote} meta_description: 130-160 car, sans année.
 
 ORDRE OBLIGATOIRE DU CONTENU (respecter strictement cette séquence):
 [1] ${snippetInstr}
-[2] INTRO (80 mots max): ${isLM?"hook vérité ligne 1 (jamais 'Dans cet article')":"accroche directe"}, contexte + mot-clé naturel. Dernière ligne de l'intro: <!-- wp:shortcode -->${scIntro}<!-- /wp:shortcode -->
+[2] INTRO (80 mots max): ${isLM?"hook vérité ligne 1 (jamais 'Dans cet article')":"accroche directe"}, contexte + mot-clé naturel. ${scIntro?`Dernière ligne de l'intro: <!-- wp:shortcode -->${scIntro}<!-- /wp:shortcode -->`:"Aucun shortcode dans l'intro : n'invente jamais de shortcode ([toc], [contact-form-7] ou autre)."}
 ⚠️ Le bloc [1] SNIPPET doit impérativement apparaître AVANT le bloc [2] INTRO dans html_content. JAMAIS après.
 [3] CORPS: ${isLM?"H2 humains avec verbe, punchline/section, 2-4 moments signature, 1 stat concrète.":"H2 naturels, exemples concrets."} Paragraphes 3-4 lignes. Transitions fluides. ${yearNote}
 LISTES AVANTAGES/INCONVENIENTS: quand une section presente des avantages ou inconvenients:
@@ -346,7 +346,7 @@ ${isRef
 TIRET CADRATIN: INTERDIT absolument. Ne jamais ecrire le caractere em dash nulle part. Choisir la meilleure alternative selon le contexte : virgule sans espace avant pour une incise ("le DSO, indicateur cle, doit etre suivi") ; deux-points pour une definition ("DSO : delai moyen de recouvrement") ; parentheses pour une precision optionnelle ("le DSO (delai moyen de recouvrement)") ; tiret simple dans les titres ou listes. Ne jamais mettre espace avant une virgule.
 CHIFFRES: toujours en chiffres (2026 pas "deux mille vingt-six", 49€ pas "quarante-neuf euros", 3 pas "trois" sauf debut de phrase).
 [4] FAQ: 3 questions PAA, reponses 50-150 mots. ${useYear?"Annee dans FAQ: [current_date format=Y]":""}
-[5] CONCLUSION+CTA: ${isLM?"benefice concret AVANT l'action.":"CTA clair."} Fin: <!-- wp:shortcode -->${scEnd}<!-- /wp:shortcode -->
+[5] CONCLUSION+CTA: ${isLM?"benefice concret AVANT l'action.":"CTA clair."} ${scEnd?`Fin: <!-- wp:shortcode -->${scEnd}<!-- /wp:shortcode -->`:"Aucun shortcode en fin d'article : n'invente jamais de shortcode."}
 RAPPEL ANNEE: ${useYear?"wp_title avec [current_date format=Y]. PAS de H1 dans html_content. Aucun chiffre d'annee dans le contenu, meta_title ou meta_description.":""}
 ANTI-STUFFING: >5 mots mot-cle colle=INTERDIT.
 SEO: densite 1-1.5%, semantique 15+, entites nommees, 2-3 ancres maillage, EEAT.
